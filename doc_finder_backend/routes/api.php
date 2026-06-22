@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\SymptomsController;
 use App\Http\Controllers\Api\ConditionsController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\PharmacyOrderController;
+use App\Http\Controllers\Api\AdminReferenceController;
 use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\MentalHealthMaterialController;
 use App\Http\Controllers\Api\MentalHealthPurchaseController;
@@ -225,6 +226,42 @@ Route::middleware(['api'])->group(function () {
         Route::get('/ratings/{type}/{id}', [RatingController::class, 'show']);
         Route::get('/my-ratings', [RatingController::class, 'userRatings']);
         Route::get('/top-rated-doctors', [RatingController::class, 'topRatedDoctors']);
+
+        // Admin reference data CRUD (admin gating done inside controller)
+        Route::get('/admin/reference/specializations', [AdminReferenceController::class, 'indexSpecializations']);
+        Route::post('/admin/reference/specializations', [AdminReferenceController::class, 'storeSpecialization']);
+        Route::put('/admin/reference/specializations/{id}', [AdminReferenceController::class, 'updateSpecialization']);
+        Route::delete('/admin/reference/specializations/{id}', [AdminReferenceController::class, 'destroySpecialization']);
+
+        Route::get('/admin/reference/facility-types', [AdminReferenceController::class, 'indexFacilityTypes']);
+        Route::post('/admin/reference/facility-types', [AdminReferenceController::class, 'storeFacilityType']);
+        Route::put('/admin/reference/facility-types/{id}', [AdminReferenceController::class, 'updateFacilityType']);
+        Route::delete('/admin/reference/facility-types/{id}', [AdminReferenceController::class, 'destroyFacilityType']);
+
+        Route::get('/admin/reference/facility-levels', [AdminReferenceController::class, 'indexFacilityLevels']);
+        Route::post('/admin/reference/facility-levels', [AdminReferenceController::class, 'storeFacilityLevel']);
+        Route::put('/admin/reference/facility-levels/{id}', [AdminReferenceController::class, 'updateFacilityLevel']);
+        Route::delete('/admin/reference/facility-levels/{id}', [AdminReferenceController::class, 'destroyFacilityLevel']);
+
+        Route::get('/admin/reference/insurances', [AdminReferenceController::class, 'indexInsurances']);
+        Route::post('/admin/reference/insurances', [AdminReferenceController::class, 'storeInsurance']);
+        Route::put('/admin/reference/insurances/{id}', [AdminReferenceController::class, 'updateInsurance']);
+        Route::delete('/admin/reference/insurances/{id}', [AdminReferenceController::class, 'destroyInsurance']);
+
+        Route::get('/admin/reference/group-categories', [AdminReferenceController::class, 'indexGroupCategories']);
+        Route::post('/admin/reference/group-categories', [AdminReferenceController::class, 'storeGroupCategory']);
+        Route::put('/admin/reference/group-categories/{id}', [AdminReferenceController::class, 'updateGroupCategory']);
+        Route::delete('/admin/reference/group-categories/{id}', [AdminReferenceController::class, 'destroyGroupCategory']);
+
+        Route::get('/admin/reference/conditions', [AdminReferenceController::class, 'indexConditions']);
+        Route::post('/admin/reference/conditions', [AdminReferenceController::class, 'storeCondition']);
+        Route::put('/admin/reference/conditions/{id}', [AdminReferenceController::class, 'updateCondition']);
+        Route::delete('/admin/reference/conditions/{id}', [AdminReferenceController::class, 'destroyCondition']);
+
+        Route::get('/admin/reference/symptoms', [AdminReferenceController::class, 'indexSymptoms']);
+        Route::post('/admin/reference/symptoms', [AdminReferenceController::class, 'storeSymptom']);
+        Route::put('/admin/reference/symptoms/{id}', [AdminReferenceController::class, 'updateSymptom']);
+        Route::delete('/admin/reference/symptoms/{id}', [AdminReferenceController::class, 'destroySymptom']);
 
         // Prescriptions (medication)
         Route::get('/prescriptions/medication', [PrescriptionController::class, 'indexMedication']);

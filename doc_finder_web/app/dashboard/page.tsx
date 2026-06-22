@@ -8,7 +8,8 @@ import {
   Stethoscope, Pill, Users, Building2, Calendar, Heart,
   ChevronRight, UserCircle, Clock, ShieldCheck, Plus,
   Sparkles, AlertTriangle, Loader2, CheckCircle2,
-  Brain, BookOpen, Shield,
+  Brain, BookOpen, Shield, Layers, Activity, Thermometer,
+  Settings,
 } from "lucide-react";
 import { getGreeting } from "@/lib/utils";
 import api from "@/lib/api";
@@ -421,6 +422,75 @@ export default function DashboardPage() {
               />
             )}
           </div>
+        )}
+
+        {/* Reference data — admin only */}
+        {user && isAdmin(user) && (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <Settings className="w-5 h-5 text-gray-500" />
+              <h2 className="text-lg font-bold text-gray-800">Reference Data</h2>
+              <span className="text-xs text-gray-400">Configure lookup tables used across the platform</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <AdminModuleCard
+                icon={<Stethoscope className="w-5 h-5 text-blue-600" />}
+                iconBg="bg-blue-50"
+                title="Specializations"
+                desc="Doctor specialties (Cardiologist, Dentist, …)"
+                viewHref="/admin/specializations"
+                newHref="/admin/specializations"
+              />
+              <AdminModuleCard
+                icon={<Building2 className="w-5 h-5 text-green-600" />}
+                iconBg="bg-green-50"
+                title="Facility Types"
+                desc="Hospital, Clinic, Lab, Imaging Centre, …"
+                viewHref="/admin/facility-types"
+                newHref="/admin/facility-types"
+              />
+              <AdminModuleCard
+                icon={<Layers className="w-5 h-5 text-teal-600" />}
+                iconBg="bg-teal-50"
+                title="Facility Levels"
+                desc="Health facility tier classifications"
+                viewHref="/admin/facility-levels"
+                newHref="/admin/facility-levels"
+              />
+              <AdminModuleCard
+                icon={<ShieldCheck className="w-5 h-5 text-amber-600" />}
+                iconBg="bg-amber-50"
+                title="Insurances"
+                desc="Insurance providers accepted by facilities"
+                viewHref="/admin/insurances"
+                newHref="/admin/insurances"
+              />
+              <AdminModuleCard
+                icon={<Users className="w-5 h-5 text-orange-600" />}
+                iconBg="bg-orange-50"
+                title="Group Categories"
+                desc="Categories for support groups"
+                viewHref="/admin/group-categories"
+                newHref="/admin/group-categories"
+              />
+              <AdminModuleCard
+                icon={<Activity className="w-5 h-5 text-rose-600" />}
+                iconBg="bg-rose-50"
+                title="Conditions"
+                desc="Medical conditions used in finders & screenings"
+                viewHref="/admin/conditions"
+                newHref="/admin/conditions"
+              />
+              <AdminModuleCard
+                icon={<Thermometer className="w-5 h-5 text-purple-600" />}
+                iconBg="bg-purple-50"
+                title="Symptoms"
+                desc="Symptoms used in the doctor finder"
+                viewHref="/admin/symptoms"
+                newHref="/admin/symptoms"
+              />
+            </div>
+          </>
         )}
       </div>
     </main>
