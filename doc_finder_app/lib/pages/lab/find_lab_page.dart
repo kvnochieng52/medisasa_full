@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:xyvra_health/shared/bottom_navigation_bar.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
+enum LabServiceType { lab, radiology, both }
+
 class FindLabPage extends StatefulWidget {
-  const FindLabPage({Key? key}) : super(key: key);
+  final LabServiceType serviceType;
+  const FindLabPage({Key? key, this.serviceType = LabServiceType.both}) : super(key: key);
 
   @override
   _FindLabPageState createState() => _FindLabPageState();
@@ -79,9 +82,13 @@ class _FindLabPageState extends State<FindLabPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Find Lab/Radiology',
-          style: TextStyle(fontSize: 20, color: Colors.white),
+        title: Text(
+          widget.serviceType == LabServiceType.lab
+              ? 'Find Lab'
+              : widget.serviceType == LabServiceType.radiology
+                  ? 'Find Radiology'
+                  : 'Find Lab/Radiology',
+          style: const TextStyle(fontSize: 20, color: Colors.white),
         ),
         backgroundColor: const Color(0xFF008faf), // Set the app bar color
         iconTheme: const IconThemeData(

@@ -8,6 +8,52 @@ import 'package:flutter/material.dart';
 class FindSectionWidget extends StatelessWidget {
   FindSectionWidget({Key? key}) : super(key: key);
 
+  // Icon-based tile for entries without a matching asset image
+  Widget buildIconTile(
+      IconData icon, String title, Widget page, BuildContext context) {
+    return GestureDetector(
+      onTap: () => navigateToPage(context, page),
+      child: Container(
+        width: 80,
+        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 60,
+              width: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFF008faf).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF008faf).withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: const Color(0xFF008faf),
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF2D3748),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Function to build the icon and title with a tap gesture for navigation
   Widget buildIconWithTitle(
       String imagePath, String title, Widget page, BuildContext context) {
@@ -141,6 +187,18 @@ class FindSectionWidget extends StatelessWidget {
                   'assets/images/counselling.png',
                   'Support Group',
                   FindSupportGroupPage(),
+                  context,
+                ),
+                buildIconWithTitle(
+                  'assets/images/lab.png',
+                  'Lab',
+                  const FindLabPage(serviceType: LabServiceType.lab),
+                  context,
+                ),
+                buildIconTile(
+                  Icons.medical_information,
+                  'Radiology',
+                  const FindLabPage(serviceType: LabServiceType.radiology),
                   context,
                 ),
               ],

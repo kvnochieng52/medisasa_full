@@ -3,14 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Stethoscope, Building2, Pill, Users, ChevronRight, Sparkles } from "lucide-react";
+import { Search, Stethoscope, Building2, Pill, Users, ChevronRight, Sparkles, FlaskConical, Scan } from "lucide-react";
 import { getGreeting } from "@/lib/utils";
 
 const quickLinks = [
-  { icon: Stethoscope, label: "Find Doctor", href: "/doctors", color: "bg-blue-50 text-blue-600" },
-  { icon: Building2,   label: "Hospital",    href: "/hospitals", color: "bg-green-50 text-green-600" },
-  { icon: Pill,        label: "Pharmacy",    href: "/pharmacy",  color: "bg-brand-50 text-brand-600" },
-  { icon: Users,       label: "Support",     href: "/support-groups", color: "bg-orange-50 text-orange-600" },
+  { icon: Stethoscope,  label: "Find Doctor", href: "/doctors", color: "bg-blue-50 text-blue-600" },
+  { icon: Building2,    label: "Hospital",    href: "/hospitals", color: "bg-green-50 text-green-600" },
+  { icon: Pill,         label: "Pharmacy",    href: "/pharmacy",  color: "bg-brand-50 text-brand-600" },
+  { icon: Users,        label: "Support",     href: "/support-groups", color: "bg-orange-50 text-orange-600" },
+  { icon: FlaskConical, label: "Lab",         href: "/hospitals?type=lab", color: "bg-purple-50 text-purple-600" },
+  { icon: Scan,         label: "Radiology",   href: "/hospitals?type=radiology", color: "bg-pink-50 text-pink-600" },
 ];
 
 export default function HeroSection() {

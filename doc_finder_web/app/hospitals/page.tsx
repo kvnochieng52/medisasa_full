@@ -1,13 +1,36 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search, X, Star, MapPin, Building2, Phone, Mail,
-  Globe, RefreshCw, ChevronRight, SortAsc,
+  Globe, RefreshCw, SortAsc, FlaskConical, Scan,
 } from "lucide-react";
 import api, { getImageUrl } from "@/lib/api";
+
+type FacilityTypeFilter = "lab" | "radiology";
+
+const TYPE_FILTERS: Record<FacilityTypeFilter, {
+  label: string;
+  matchType: RegExp;
+  matchSpecialty: RegExp;
+  icon: typeof FlaskConical;
+}> = {
+  lab: {
+    label: "Laboratories",
+    matchType: /\blab/i,
+    matchSpecialty: /\blab|patholog/i,
+    icon: FlaskConical,
+  },
+  radiology: {
+    label: "Radiology & Imaging",
+    matchType: /imaging|radiolog|diagnostic/i,
+    matchSpecialty: /radiolog/i,
+    icon: Scan,
+  },
+};
 
 interface Specialty { id: number; specialization_name: string }
 interface FacilityType { id: number; name: string }
@@ -54,7 +77,14 @@ function StarRow({ rating, total }: { rating: number; total: number }) {
   );
 }
 
-export default function HospitalsPage() {
+function HospitalsContent() {
+  const searchParams = useSearchParams();
+  const initialTypeParam = searchParams.get("type");
+  const initialTypeFilter: FacilityTypeFilter | null =
+    initialTypeParam === "lab" || initialTypeParam === "radiology"
+      ? initialTypeParam
+      : null;
+
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [filtered, setFiltered] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +92,7 @@ export default function HospitalsPage() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("rating");
   const [showSort, setShowSort] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<FacilityTypeFilter | null>(initialTypeFilter);
 
   useEffect(() => {
     api.get("/public-facilities/approved", { params: { per_page: 50 } })
@@ -74,8 +105,22 @@ export default function HospitalsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const applyFilterSort = useCallback((query: string, sort: SortKey, list: Facility[]) => {
+  const applyFilterSort = useCallback((
+    query: string,
+    sort: SortKey,
+    type: FacilityTypeFilter | null,
+    list: Facility[],
+  ) => {
     let result = list;
+
+    if (type) {
+      const def = TYPE_FILTERS[type];
+      result = result.filter(f =>
+        (f.facilityType?.name && def.matchType.test(f.facilityType.name)) ||
+        f.specialties?.some(s => def.matchSpecialty.test(s.specialization_name))
+      );
+    }
+
     if (query.trim()) {
       const q = query.toLowerCase();
       result = result.filter(f =>
@@ -94,8 +139,10 @@ export default function HospitalsPage() {
   }, []);
 
   useEffect(() => {
-    applyFilterSort(search, sortBy, facilities);
-  }, [search, sortBy, facilities, applyFilterSort]);
+    applyFilterSort(search, sortBy, typeFilter, facilities);
+  }, [search, sortBy, typeFilter, facilities, applyFilterSort]);
+
+  const activeFilter = typeFilter ? TYPE_FILTERS[typeFilter] : null;
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -105,10 +152,20 @@ export default function HospitalsPage() {
       <div className="bg-gradient-to-r from-green-600 to-emerald-500 pt-28 pb-8 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
-            <Building2 className="w-7 h-7 text-white" />
-            <h1 className="text-2xl font-bold text-white">Hospitals & Clinics</h1>
+            {activeFilter ? (
+              <activeFilter.icon className="w-7 h-7 text-white" />
+            ) : (
+              <Building2 className="w-7 h-7 text-white" />
+            )}
+            <h1 className="text-2xl font-bold text-white">
+              {activeFilter ? activeFilter.label : "Hospitals & Clinics"}
+            </h1>
           </div>
-          <p className="text-green-100 text-sm mb-6">Find approved healthcare facilities near you</p>
+          <p className="text-green-100 text-sm mb-6">
+            {activeFilter
+              ? `Approved facilities offering ${activeFilter.label.toLowerCase()} services`
+              : "Find approved healthcare facilities near you"}
+          </p>
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -124,6 +181,21 @@ export default function HospitalsPage() {
               </button>
             )}
           </div>
+          {activeFilter && (
+            <div className="mt-4 flex items-center gap-2">
+              <span className="inline-flex items-center gap-2 bg-white/95 text-green-700 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm">
+                <activeFilter.icon className="w-3.5 h-3.5" />
+                Filtering: {activeFilter.label}
+                <button
+                  onClick={() => setTypeFilter(null)}
+                  className="ml-1 text-green-600 hover:text-green-800"
+                  aria-label="Clear filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -258,5 +330,13 @@ export default function HospitalsPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function HospitalsPage() {
+  return (
+    <Suspense>
+      <HospitalsContent />
+    </Suspense>
   );
 }
