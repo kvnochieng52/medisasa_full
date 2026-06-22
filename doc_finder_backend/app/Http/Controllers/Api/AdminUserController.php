@@ -78,7 +78,13 @@ class AdminUserController extends Controller
     public function specializations(Request $request)
     {
         $this->requireAdmin($request);
-        $specs = Specialization::where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+
+        // Select the real columns; the Specialization model exposes a `name`
+        // accessor (via $appends) so API consumers see `{id, name}`.
+        $specs = Specialization::where('is_active', 1)
+            ->orderBy('specialization_name')
+            ->get(['id', 'specialization_name']);
+
         return response()->json(['success' => true, 'data' => $specs]);
     }
 

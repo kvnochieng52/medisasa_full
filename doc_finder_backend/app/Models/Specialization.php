@@ -16,6 +16,21 @@ class Specialization extends Model
         'is_active_for_facility',
     ];
 
+    // Expose `name` (and `description`) on serialised output so API consumers
+    // can read a single canonical field name. The DB columns remain
+    // `specialization_name` / `specialization_description`.
+    protected $appends = ['name', 'description'];
+
+    public function getNameAttribute(): ?string
+    {
+        return $this->specialization_name;
+    }
+
+    public function getDescriptionAttribute(): ?string
+    {
+        return $this->specialization_description;
+    }
+
     /**
      * Get the facilities that have this specialization
      */
