@@ -4,10 +4,11 @@ import { Toaster } from "react-hot-toast";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Xyvra Health | Find Doctors, Hospitals & Pharmacies",
+  title: "MediSasa | Find Doctors, Hospitals & Pharmacies",
   description:
     "Find qualified doctors, hospitals, pharmacies, and support groups near you. Book appointments and get healthcare delivered.",
-  keywords: "doctor finder, healthcare, hospital, pharmacy, appointments, telemedicine",
+  keywords: "medisasa, doctor finder, healthcare, hospital, pharmacy, appointments, telemedicine",
+  applicationName: "MediSasa",
 };
 
 export default function RootLayout({

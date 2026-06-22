@@ -234,7 +234,7 @@ export default function TrendingPage() {
 
                           <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
                             <span className="font-medium text-gray-600 truncate max-w-[60%]">
-                              {blog.author_name ?? "Xyvra Team"}
+                              {blog.author_name ?? "MediSasa Team"}
                             </span>
                             <div className="flex items-center gap-1 flex-shrink-0">
                               <Clock className="w-3 h-3" />

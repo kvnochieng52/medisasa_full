@@ -104,7 +104,7 @@ export default function LatestBlogs() {
             : blogs.map((blog) => {
                 const imageUrl = getImageUrl(blog.featured_image);
                 const authorName =
-                  blog.author_name ?? blog.author?.name ?? "Xyvra Team";
+                  blog.author_name ?? blog.author?.name ?? "MediSasa Team";
                 const excerpt =
                   blog.excerpt ??
                   (blog.content ? truncate(blog.content, 100) : "");

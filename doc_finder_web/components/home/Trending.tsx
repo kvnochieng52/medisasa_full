@@ -97,7 +97,7 @@ export default function Trending() {
             )
             : blogs.map(blog => {
                 const imageUrl = getImageUrl(blog.featured_image);
-                const authorName = blog.author_name ?? "Xyvra Team";
+                const authorName = blog.author_name ?? "MediSasa Team";
                 const excerpt = blog.excerpt ?? (blog.content ? truncate(blog.content, 100) : "");
                 const date = blog.published_at ?? blog.created_at;
 

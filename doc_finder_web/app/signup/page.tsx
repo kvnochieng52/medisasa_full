@@ -99,7 +99,7 @@ export default function SignUpPage() {
             <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center shadow-md mb-4">
               <Heart className="w-8 h-8 text-white" fill="white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Xyvra Health</h1>
+            <h1 className="text-2xl font-bold text-gray-900">MediSasa</h1>
             <p className="text-gray-500 text-sm mt-1">Create your account</p>
           </div>
 

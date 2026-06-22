@@ -57,7 +57,7 @@ export default function Navbar() {
               <Heart className="w-5 h-5 text-white" fill="white" />
             </div>
             <span className="font-bold text-xl text-gray-900">
-              Xyvra<span className="text-brand-500">Health</span>
+              Medi<span className="text-brand-500">Sasa</span>
             </span>
           </Link>
 

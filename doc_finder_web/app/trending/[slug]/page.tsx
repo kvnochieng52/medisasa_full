@@ -110,7 +110,7 @@ export default function BlogDetailPage() {
       {/* Meta bar */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-          <span className="font-semibold text-gray-700">{blog.author_name ?? "Xyvra Team"}</span>
+          <span className="font-semibold text-gray-700">{blog.author_name ?? "MediSasa Team"}</span>
           {date && (
             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatDate(date)}</span>
           )}

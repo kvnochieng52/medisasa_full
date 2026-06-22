@@ -1,10 +1,10 @@
 import axios from "axios";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://192.168.0.15:8000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://medisasa.co.ke/api";
 
 export const STORAGE_URL =
-  process.env.NEXT_PUBLIC_STORAGE_URL || "http://192.168.0.15:8000/storage";
+  process.env.NEXT_PUBLIC_STORAGE_URL || "https://medisasa.co.ke/storage";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

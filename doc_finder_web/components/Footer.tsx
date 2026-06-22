@@ -35,7 +35,7 @@ export default function Footer() {
                 <Heart className="w-5 h-5 text-white" fill="white" />
               </div>
               <span className="font-bold text-xl text-white">
-                Xyvra<span className="text-brand-400">Health</span>
+                Medi<span className="text-brand-400">Sasa</span>
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed mb-5">
@@ -102,7 +102,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-sm text-gray-400">
                 <Mail className="w-4 h-4 text-brand-400 flex-shrink-0" />
-                support@xyvrahealth.com
+                support@medisasa.co.ke
               </li>
               <li className="flex items-center gap-3 text-sm text-gray-400">
                 <Phone className="w-4 h-4 text-brand-400 flex-shrink-0" />
@@ -119,7 +119,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <span>
-            &copy; {new Date().getFullYear()} Xyvra Health. All rights reserved.
+            &copy; {new Date().getFullYear()} MediSasa. All rights reserved.
           </span>
           <div className="flex gap-4">
             <Link href="/privacy" className="hover:text-brand-400 transition-colors">

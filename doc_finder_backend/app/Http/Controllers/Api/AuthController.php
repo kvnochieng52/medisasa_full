@@ -40,8 +40,8 @@ class AuthController extends Controller
                     'name' => $request->name,
                 ],
                 function ($message) use ($request) {
-                    $message->from('app@justhomesapp.com', 'Xyvra Group');
-                    $message->to($request->email)->subject("Xyvra Group: Email Verification Code");
+                    $message->from('app@justhomesapp.com', 'MediSasa');
+                    $message->to($request->email)->subject("MediSasa: Email Verification Code");
                 }
             );
         } catch (\Exception $e) {
@@ -162,8 +162,8 @@ class AuthController extends Controller
                     'name' => $user->name,
                 ],
                 function ($message) use ($user) {
-                    $message->from('app@justhomesapp.com', 'Xyvra Group');
-                    $message->to($user->email)->subject("Xyvra Group: Password Reset Code");
+                    $message->from('app@justhomesapp.com', 'MediSasa');
+                    $message->to($user->email)->subject("MediSasa: Password Reset Code");
                 }
             );
         } catch (\Exception $e) {
