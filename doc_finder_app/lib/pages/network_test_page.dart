@@ -201,9 +201,9 @@ class _NetworkTestPageState extends State<NetworkTestPage> {
     _addResult('🔄 Testing alternative URLs...');
 
     final urls = [
-      'http://172.19.112.1:8000',
-      'http://172.19.112.1:8000/api',
-      'http://172.19.112.1:8000/api/test/health',
+      'https://medisasa.co.ke',
+      'https://medisasa.co.ke/api',
+      'https://medisasa.co.ke/api/test/health',
     ];
 
     for (final url in urls) {

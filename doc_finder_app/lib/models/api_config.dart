@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConfig {
-  // PRODUCTION CONFIGURATION
-  // Using local network server for development
+  // PRODUCTION CONFIGURATION — single origin via nginx
+  // Laravel API at /api, storage at /storage, Next.js at /
 
-  static const String _productionUrl = 'http://192.168.0.15:8000';
+  static const String _productionUrl = 'https://medisasa.co.ke';
 
   static String get baseUrl {
     return '$_productionUrl/api';
@@ -19,8 +19,8 @@ class ApiConfig {
     return _productionUrl;
   }
 
-  // Next.js web frontend (separate port from Laravel backend)
-  static const String _webFrontendUrl = 'http://192.168.0.15:3001';
+  // Next.js web frontend (same origin as the backend)
+  static const String _webFrontendUrl = 'https://medisasa.co.ke';
   static String get webAppUrl {
     return _webFrontendUrl;
   }
