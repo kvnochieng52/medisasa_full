@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:xyvra_health/models/api_config.dart';
 import 'package:xyvra_health/auth_service.dart';
 import 'package:xyvra_health/shared/subscription_gate.dart';
+import 'package:xyvra_health/pages/prescriptions/new_lab_prescription_page.dart';
+import 'package:xyvra_health/pages/prescriptions/new_medication_prescription_page.dart';
 import 'package:intl/intl.dart';
 
 class DoctorAppointmentsPage extends StatefulWidget {
@@ -728,6 +730,62 @@ class _DoctorAppointmentsPageState extends State<DoctorAppointmentsPage> {
                           ),
                         ],
                       ),
+                    ),
+                  ],
+
+                  // Prescription shortcuts (visible for confirmed + completed appointments)
+                  if (status == 'confirmed' || status == 'completed') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => NewMedicationPrescriptionPage(
+                                  appointmentId: appointment['id'] is int
+                                      ? appointment['id']
+                                      : int.tryParse('${appointment['id']}'),
+                                  patientName: appointment['patient_name'],
+                                  patientEmail: appointment['patient_email'],
+                                  patientPhone: appointment['patient_telephone'],
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(Icons.medication, size: 18, color: Color(0xFF008faf)),
+                            label: const Text('Medication Rx', style: TextStyle(color: Color(0xFF008faf))),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF008faf)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => NewLabPrescriptionPage(
+                                  appointmentId: appointment['id'] is int
+                                      ? appointment['id']
+                                      : int.tryParse('${appointment['id']}'),
+                                  patientName: appointment['patient_name'],
+                                  patientEmail: appointment['patient_email'],
+                                  patientPhone: appointment['patient_telephone'],
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(Icons.biotech, size: 18, color: Color(0xFF8b5cf6)),
+                            label: const Text('Lab Order', style: TextStyle(color: Color(0xFF8b5cf6))),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF8b5cf6)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
 

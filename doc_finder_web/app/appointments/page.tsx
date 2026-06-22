@@ -7,10 +7,16 @@ import Link from "next/link";
 import {
   Calendar, Clock, User, Stethoscope, RefreshCw,
   Video, Building2, CheckCircle2, XCircle, AlertCircle,
-  ChevronRight, Plus,
+  ChevronRight, Plus, Pill, FlaskConical,
 } from "lucide-react";
 import api, { getImageUrl } from "@/lib/api";
 import { getInitials } from "@/lib/utils";
+import { useAuth } from "@/lib/hooks/useAuth";
+
+function isDoctor(u: { account_type?: number | string | null } | null): boolean {
+  if (!u) return false;
+  return u.account_type === 2 || u.account_type === "2" || u.account_type === "serviceProvider";
+}
 
 interface Doctor {
   id: number;
@@ -70,6 +76,8 @@ function formatTime(timeStr: string) {
 
 export default function AppointmentsPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const doctor = isDoctor(user as { account_type?: number | string | null });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -220,11 +228,43 @@ export default function AppointmentsPage() {
                     <p className="text-xs text-gray-500 mt-2 bg-gray-50 rounded-xl px-3 py-2 leading-relaxed">{appt.notes}</p>
                   )}
 
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 flex-wrap">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <User className="w-3.5 h-3.5" /> {appt.patient_name}
                     </div>
-                    {appt.doctor && (
+                    {doctor && (
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Link
+                          href={{
+                            pathname: "/prescriptions/medication/new",
+                            query: {
+                              appointment_id: appt.id,
+                              patient_name: appt.patient_name,
+                              patient_email: appt.patient_email ?? "",
+                              patient_phone: appt.patient_telephone ?? "",
+                            },
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-500 hover:text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition-colors"
+                        >
+                          <Pill className="w-3.5 h-3.5" /> Medication Rx
+                        </Link>
+                        <Link
+                          href={{
+                            pathname: "/prescriptions/lab/new",
+                            query: {
+                              appointment_id: appt.id,
+                              patient_name: appt.patient_name,
+                              patient_email: appt.patient_email ?? "",
+                              patient_phone: appt.patient_telephone ?? "",
+                            },
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-purple-500 hover:text-purple-600 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition-colors"
+                        >
+                          <FlaskConical className="w-3.5 h-3.5" /> Lab Order
+                        </Link>
+                      </div>
+                    )}
+                    {!doctor && appt.doctor && (
                       <Link href={`/doctors/${appt.doctor.id}`}
                         className="ml-auto flex items-center gap-1 text-xs font-semibold text-pink-500 hover:text-pink-600 transition-colors">
                         View Doctor <ChevronRight className="w-3.5 h-3.5" />

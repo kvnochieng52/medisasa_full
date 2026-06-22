@@ -20,8 +20,8 @@ const channels = [
   {
     icon: Phone,
     title: "Phone",
-    value: "+254 700 000 000",
-    href: "tel:+254700000000",
+    value: "+254 759 000 652",
+    href: "tel:+254759000652",
     sub: "Mon–Fri, 8:00 AM – 6:00 PM EAT.",
   },
   {

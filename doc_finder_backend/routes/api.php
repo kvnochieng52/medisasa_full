@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\SymptomsController;
 use App\Http\Controllers\Api\ConditionsController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\PharmacyOrderController;
+use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\MentalHealthMaterialController;
 use App\Http\Controllers\Api\MentalHealthPurchaseController;
 use App\Http\Controllers\Api\DepressionScreeningController;
@@ -224,6 +225,20 @@ Route::middleware(['api'])->group(function () {
         Route::get('/ratings/{type}/{id}', [RatingController::class, 'show']);
         Route::get('/my-ratings', [RatingController::class, 'userRatings']);
         Route::get('/top-rated-doctors', [RatingController::class, 'topRatedDoctors']);
+
+        // Prescriptions (medication)
+        Route::get('/prescriptions/medication', [PrescriptionController::class, 'indexMedication']);
+        Route::post('/prescriptions/medication', [PrescriptionController::class, 'storeMedication']);
+        Route::get('/prescriptions/medication/{id}', [PrescriptionController::class, 'showMedication']);
+        Route::get('/prescriptions/medication/{id}/pdf', [PrescriptionController::class, 'pdfMedication']);
+        Route::post('/prescriptions/medication/{id}/email', [PrescriptionController::class, 'emailMedication']);
+
+        // Prescriptions (lab)
+        Route::get('/prescriptions/lab', [PrescriptionController::class, 'indexLab']);
+        Route::post('/prescriptions/lab', [PrescriptionController::class, 'storeLab']);
+        Route::get('/prescriptions/lab/{id}', [PrescriptionController::class, 'showLab']);
+        Route::get('/prescriptions/lab/{id}/pdf', [PrescriptionController::class, 'pdfLab']);
+        Route::post('/prescriptions/lab/{id}/email', [PrescriptionController::class, 'emailLab']);
 
         // Subscription routes (authenticated)
         Route::get('/subscription/status', [SubscriptionController::class, 'status']);

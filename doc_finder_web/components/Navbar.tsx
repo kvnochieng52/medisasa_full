@@ -13,6 +13,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   Shield,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useCart } from "@/lib/context/CartContext";
@@ -135,6 +136,14 @@ export default function Navbar() {
                       >
                         <LayoutDashboard className="w-4 h-4" />
                         Appointments
+                      </Link>
+                      <Link
+                        href="/prescriptions"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Prescriptions
                       </Link>
                       {Number((user as { account_type?: number | string | null }).account_type) === 3 && (
                         <>

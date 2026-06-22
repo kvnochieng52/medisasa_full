@@ -129,11 +129,11 @@ export default function HelpPage() {
                 Contact Support
               </Link>
               <a
-                href="tel:+254700000000"
+                href="tel:+254759000652"
                 className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border border-gray-200 hover:border-brand-400 text-gray-700 font-semibold text-sm transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                +254 700 000 000
+                +254 759 000 652
               </a>
             </div>
           </div>

@@ -12,6 +12,7 @@ import 'package:xyvra_health/pages/groups/your_groups/your_groups.dart';
 import 'package:xyvra_health/pages/pharmacy/pharmacy_page.dart';
 import 'package:xyvra_health/pages/profile/profile_page.dart';
 import 'package:xyvra_health/pages/appointments/doctor_appointments_page.dart';
+import 'package:xyvra_health/pages/prescriptions/prescriptions_history_page.dart';
 import 'package:xyvra_health/pages/browse/browse_doctors_page.dart';
 import 'package:xyvra_health/pages/browse/browse_facilities_page.dart';
 import 'package:flutter/material.dart';
@@ -187,6 +188,20 @@ class DashboardDrawer extends StatelessWidget {
                 );
               },
             ),
+          ListTile(
+            leading: const Icon(Icons.description, color: Colors.black),
+            title: const Text('Prescriptions',
+                style: TextStyle(color: Colors.black)),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrescriptionsHistoryPage(),
+                ),
+              );
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.psychology, color: Color(0xFF008faf)),
             title: const Text('Mental Health',
