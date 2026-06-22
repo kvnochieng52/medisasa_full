@@ -145,25 +145,19 @@ export default function Navbar() {
                         <FileText className="w-4 h-4" />
                         Prescriptions
                       </Link>
-                      {(() => {
-                        const u = user as { account_type?: number | string | null; sp_approved?: number | null };
-                        const isAdminUser = Number(u.account_type) === 3;
-                        const isSP = u.account_type === 2 || u.account_type === "2" || u.account_type === "serviceProvider";
-                        const isApprovedSP = isSP && !!u.sp_approved;
-                        return (isAdminUser || isApprovedSP) ? (
-                          <>
-                            <hr className="my-1 border-gray-100" />
-                            <Link
-                              href="/admin"
-                              className="flex items-center gap-2 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-semibold"
-                              onClick={() => setDropdownOpen(false)}
-                            >
-                              <Shield className="w-4 h-4" />
-                              Admin Console
-                            </Link>
-                          </>
-                        ) : null;
-                      })()}
+                      {Number((user as { account_type?: number | string | null }).account_type) === 3 && (
+                        <>
+                          <hr className="my-1 border-gray-100" />
+                          <Link
+                            href="/admin"
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-semibold"
+                            onClick={() => setDropdownOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            Admin Console
+                          </Link>
+                        </>
+                      )}
                       <hr className="my-1 border-gray-100" />
                       <button
                         onClick={() => { logout(); setDropdownOpen(false); }}

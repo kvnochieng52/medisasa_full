@@ -384,8 +384,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Admin module cards — admins + approved SPs (backend gates destructive actions) */}
-        {user && (isAdmin(user) || isApprovedSP(user)) && (
+        {/* Admin module cards — admin-only (platform-wide management) */}
+        {user && isAdmin(user) && (
           <>
             <div className="flex items-center gap-2 mb-3">
               <Shield className="w-5 h-5 text-purple-500" />
@@ -436,8 +436,8 @@ export default function DashboardPage() {
           </>
         )}
 
-        {/* Reference data — admin + approved SPs (same rights as Articles & Surveys above) */}
-        {user && (isAdmin(user) || isApprovedSP(user)) && (
+        {/* Reference data — admin-only */}
+        {user && isAdmin(user) && (
           <>
             <div className="flex items-center gap-2 mb-3">
               <Settings className="w-5 h-5 text-gray-500" />

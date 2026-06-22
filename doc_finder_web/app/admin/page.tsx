@@ -16,10 +16,6 @@ interface UserData {
 function isAdmin(u: UserData) {
   return Number(u.account_type) === 3;
 }
-function isApprovedSP(u: UserData) {
-  const isSP = u.account_type === 2 || u.account_type === "2" || u.account_type === "serviceProvider";
-  return isSP && !!u.sp_approved;
-}
 
 interface AdminCard {
   title: string;
@@ -134,8 +130,7 @@ export default function AdminIndexPage() {
   }, []);
 
   const userIsAdmin = !!user && isAdmin(user);
-  const userIsSP = !!user && isApprovedSP(user);
-  const canSee = userIsAdmin || userIsSP;
+  const canSee = userIsAdmin;
 
   const visibleSections = SECTIONS
     .map(s => ({ ...s, items: s.items.filter(i => userIsAdmin || !i.adminOnly) }))
@@ -156,9 +151,7 @@ export default function AdminIndexPage() {
             <p className="text-sm text-gray-400">
               {userIsAdmin
                 ? "Manage everything across MediSasa"
-                : userIsSP
-                  ? "Manage your facility's content and the platform's reference data"
-                  : "Sign in with admin or service-provider access to use this console"}
+                : "Admin access required"}
             </p>
           </div>
         </div>
@@ -167,7 +160,7 @@ export default function AdminIndexPage() {
           <div className="mt-10 text-center py-16 bg-white rounded-2xl border border-gray-100">
             <Shield className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="font-semibold text-gray-600 mb-1">You don&apos;t have admin access</p>
-            <p className="text-sm text-gray-400 mb-5">Admins and approved service providers can use this console.</p>
+            <p className="text-sm text-gray-400 mb-5">Only admins can use this console.</p>
             <Link href="/dashboard" className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm rounded-xl transition-colors">
               Back to dashboard
             </Link>
