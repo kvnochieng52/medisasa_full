@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(flutter analyze:*)",
+      "Bash(keytool:*)",
+      "Bash(flutter:*)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(curl -s ifconfig.me)",
+      "Bash(ipconfig)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,93 @@
+# ── OS / Editor ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+bash.exe.stackdump
+.idea/
+.vscode/
+.fleet/
+.history/
+*.iml
+*.ipr
+*.iws
+
+# ── Secrets (never commit) ──────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.key
+*.pem
+*.jks
+*.keystore
+*.p12
+auth.json
+
+# ── Logs ────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log
+yarn-debug.log*
+
+# ─────────────────────────────────────────────────────────────
+# Laravel backend (doc_finder_backend)
+# ─────────────────────────────────────────────────────────────
+doc_finder_backend/vendor/
+doc_finder_backend/node_modules/
+doc_finder_backend/public/build/
+doc_finder_backend/public/hot/
+doc_finder_backend/public/storage
+doc_finder_backend/storage/*.key
+doc_finder_backend/storage/app/public/*
+!doc_finder_backend/storage/app/public/.gitkeep
+doc_finder_backend/storage/framework/cache/data/*
+doc_finder_backend/storage/framework/sessions/*
+doc_finder_backend/storage/framework/testing/*
+doc_finder_backend/storage/framework/views/*
+doc_finder_backend/storage/logs/*
+doc_finder_backend/bootstrap/cache/*.php
+doc_finder_backend/.phpunit.cache
+doc_finder_backend/.phpunit.result.cache
+doc_finder_backend/Homestead.json
+doc_finder_backend/Homestead.yaml
+
+# ─────────────────────────────────────────────────────────────
+# Next.js web (doc_finder_web)
+# ─────────────────────────────────────────────────────────────
+doc_finder_web/node_modules/
+doc_finder_web/.next/
+doc_finder_web/out/
+doc_finder_web/build/
+doc_finder_web/.turbo/
+doc_finder_web/.vercel/
+doc_finder_web/next-env.d.ts
+doc_finder_web/tsconfig.tsbuildinfo
+
+# ─────────────────────────────────────────────────────────────
+# Flutter app (doc_finder_app)
+# ─────────────────────────────────────────────────────────────
+doc_finder_app/.dart_tool/
+doc_finder_app/.flutter-plugins
+doc_finder_app/.flutter-plugins-dependencies
+doc_finder_app/.pub-cache/
+doc_finder_app/.pub/
+doc_finder_app/build/
+doc_finder_app/**/doc/api/
+doc_finder_app/**/ios/Flutter/.last_build_id
+doc_finder_app/android/app/debug/
+doc_finder_app/android/app/profile/
+doc_finder_app/android/app/release/
+doc_finder_app/app.*.symbols
+doc_finder_app/app.*.map.json
+doc_finder_app/lib.zip
+# Stray keystore at app root (should never be committed)
+doc_finder_app/laragonwwwdoc_finder_fulldoc_finder_app*.jks
+
+# iOS / macOS Pods + workspace generated files
+doc_finder_app/ios/Pods/
+doc_finder_app/ios/.symlinks/
+doc_finder_app/ios/Flutter/Flutter.framework
+doc_finder_app/ios/Flutter/Flutter.podspec
+doc_finder_app/macos/Pods/

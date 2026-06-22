@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I {} basename {})",
+      "Bash(grep -v \"^$\")",
+      "Bash(flutter pub *)",
+      "Bash(curl -s --connect-timeout 10 http://69.30.235.169:8006 -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s --connect-timeout 10 http://69.30.235.169:8006/api/subscription/plans)",
+      "Bash(dart analyze *)",
+      "Bash(chmod +x /Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/node_modules/.bin/cross-env)",
+      "Bash(chmod +x /Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/node_modules/.bin/next)",
+      "Bash(xargs ls -la)",
+      "Bash(grep -E \"\\\\.\\(php|dart|ts|tsx|js|jsx|migration\\)$\")",
+      "Bash(mkdir -p \"/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/admin/pharmacy/medicines/[id]/edit\")",
+      "Bash(mkdir -p \"/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/admin/pharmacy/products/[id]/edit\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8006/api/medicine-categories)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8006/api/medical-product-categories)",
+      "Bash(curl -s http://localhost:8006/api/medicine-categories)",
+      "Bash(python3 -m json.tool)"
+    ]
+  }
+}

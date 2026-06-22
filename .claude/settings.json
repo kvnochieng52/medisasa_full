@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"artisan serve\")",
+      "Bash(grep -E \"\\\\.\\(dart|ts|js\\)$\")",
+      "Bash(mkdir -p /Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/profile/setup)",
+      "Bash(node -e \"const ts = require\\('typescript'\\); const program = ts.createProgram\\(['app/checkout/payment/page.tsx'], { jsx: ts.JsxEmit.ReactJSX, moduleResolution: ts.ModuleResolutionKind.Bundler, strict: true }\\); const diags = ts.getPreEmitDiagnostics\\(program\\); diags.slice\\(0,10\\).forEach\\(d => console.log\\(ts.flattenDiagnosticMessageText\\(d.messageText, '\\\\n'\\), 'at', d.file?.fileName, d.start\\)\\);\")",
+      "Bash(mkdir -p /Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/pharmacy/medicines/\\\\[id\\\\])",
+      "Bash(mkdir -p /Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/pharmacy/products/\\\\[id\\\\])",
+      "Bash(mkdir -p \"/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/hospitals/[id]\")",
+      "Bash(mkdir -p \"/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/screening\")",
+      "Bash(mkdir -p \"/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/mental-health\")",
+      "Bash(mkdir -p \"/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/admin/mental-health\")",
+      "Bash(mkdir -p /Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/mental-health/\\\\[id\\\\])"
+    ],
+    "additionalDirectories": [
+      "/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/profile",
+      "/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/hospitals",
+      "/Users/kevin.ochieng/projects/doc_finder_full/doc_finder_web/app/mental-health"
+    ]
+  }
+}
