@@ -25,8 +25,13 @@ class AdminReferenceController extends Controller
     private function ensureAdmin(Request $request): void
     {
         $user = $request->user();
-        if (!$user || (int) $user->account_type !== 3) {
-            abort(403, 'Admins only.');
+        if (!$user) abort(401, 'Unauthenticated.');
+
+        $isAdmin = (int) $user->account_type === 3;
+        $isApprovedSP = (int) $user->account_type === 2 && (int) ($user->sp_approved ?? 0) === 1;
+
+        if (!$isAdmin && !$isApprovedSP) {
+            abort(403, 'Admins or approved service providers only.');
         }
     }
 

@@ -424,8 +424,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Reference data — admin only */}
-        {user && isAdmin(user) && (
+        {/* Reference data — admin + approved SPs (same rights as Articles & Surveys above) */}
+        {user && (isAdmin(user) || isApprovedSP(user)) && (
           <>
             <div className="flex items-center gap-2 mb-3">
               <Settings className="w-5 h-5 text-gray-500" />
