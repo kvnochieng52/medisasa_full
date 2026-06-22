@@ -53,13 +53,14 @@ function isAdmin(u: UserData) {
   return Number(u.account_type) === 3;
 }
 function isServiceProvider(u: UserData) {
-  return u.account_type === 2 || u.account_type === "serviceProvider";
+  // Backend may return account_type as int or string; normalise.
+  return Number(u.account_type) === 2 || u.account_type === "serviceProvider";
 }
 function isPendingVerification(u: UserData) {
-  return isServiceProvider(u) && !u.sp_approved;
+  return isServiceProvider(u) && Number(u.sp_approved) !== 1;
 }
 function isApprovedSP(u: UserData) {
-  return isServiceProvider(u) && !!u.sp_approved;
+  return isServiceProvider(u) && Number(u.sp_approved) === 1;
 }
 
 const quickLinks = [
@@ -83,20 +84,45 @@ export default function DashboardPage() {
     const token = localStorage.getItem("auth_token");
     if (!token) { router.replace("/login"); return; }
 
-    const raw = localStorage.getItem("user_data");
-    let parsed: UserData | null = null;
-    if (raw) {
-      try { parsed = JSON.parse(raw); setUser(parsed); } catch { /* ignore */ }
-    }
     setGreeting(getGreeting());
 
-    if (parsed && isApprovedSP(parsed)) {
-      setSubLoading(true);
-      api.get<{ success: boolean; data: SubscriptionStatus }>("/subscription/status")
-        .then(res => setSubStatus(res.data.data ?? null))
-        .catch(() => setSubStatus(null))
-        .finally(() => setSubLoading(false));
+    // Use cached user_data for the initial paint, then refresh from the server
+    // so role/sp_approved changes propagate without a re-login.
+    const raw = localStorage.getItem("user_data");
+    let cached: UserData | null = null;
+    if (raw) {
+      try { cached = JSON.parse(raw); setUser(cached); } catch { /* ignore */ }
     }
+
+    api.get<{
+      success: boolean;
+      data: { user: UserData; subscription: SubscriptionInfo | null };
+    }>("/user-profile")
+      .then(res => {
+        const payload = res.data?.data;
+        const fresh = payload?.user;
+        if (fresh && typeof fresh === "object") {
+          setUser(fresh);
+          localStorage.setItem("user_data", JSON.stringify(fresh));
+        }
+        // Use subscription that came back with the profile if present;
+        // otherwise leave it null for approved SPs to show the upgrade banner.
+        if (payload?.subscription) {
+          setSubStatus({ has_active_subscription: true, subscription: payload.subscription });
+        } else {
+          setSubStatus({ has_active_subscription: false, subscription: null });
+        }
+      })
+      .catch(() => {
+        // Fall back to cached subscription fetch if profile refresh failed.
+        if (cached && isApprovedSP(cached)) {
+          setSubLoading(true);
+          api.get<{ success: boolean; data: SubscriptionStatus }>("/subscription/status")
+            .then(r => setSubStatus(r.data.data ?? null))
+            .catch(() => setSubStatus(null))
+            .finally(() => setSubLoading(false));
+        }
+      });
 
     api.get<{ success: boolean; data: ScreeningHistory[] }>("/depression-screenings/history")
       .then(res => setScreeningHistory(Array.isArray(res.data?.data) ? res.data.data : []))
@@ -253,35 +279,35 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Admin module cards — only when subscribed */}
-            {!subLoading && hasActiveSub && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <AdminModuleCard
-                  icon={<Building2 className="w-5 h-5 text-blue-600" />}
-                  iconBg="bg-blue-50"
-                  title="Facilities"
-                  desc="Manage your clinics & hospitals"
-                  viewHref="/admin/facilities"
-                  newHref="/admin/facilities/new"
-                />
-                <AdminModuleCard
-                  icon={<Users className="w-5 h-5 text-orange-500" />}
-                  iconBg="bg-orange-50"
-                  title="Support Groups"
-                  desc="Create and manage community support groups"
-                  viewHref="/admin/support-groups"
-                  newHref="/admin/support-groups/new"
-                />
-                <AdminModuleCard
-                  icon={<Pill className="w-5 h-5 text-purple-500" />}
-                  iconBg="bg-purple-50"
-                  title="Pharmacy"
-                  desc="Manage medicines, medical products and inventory"
-                  viewHref="/admin/pharmacy"
-                  newHref="/admin/pharmacy/medicines/new"
-                />
-              </div>
-            )}
+            {/* Practice management cards — always visible to approved SPs.
+                The subscription banner above conveys whether the SP can
+                actually act on these; individual pages can enforce limits. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <AdminModuleCard
+                icon={<Building2 className="w-5 h-5 text-blue-600" />}
+                iconBg="bg-blue-50"
+                title="Facilities"
+                desc="Manage your clinics & hospitals"
+                viewHref="/admin/facilities"
+                newHref="/admin/facilities/new"
+              />
+              <AdminModuleCard
+                icon={<Users className="w-5 h-5 text-orange-500" />}
+                iconBg="bg-orange-50"
+                title="Support Groups"
+                desc="Create and manage community support groups"
+                viewHref="/admin/support-groups"
+                newHref="/admin/support-groups/new"
+              />
+              <AdminModuleCard
+                icon={<Pill className="w-5 h-5 text-purple-500" />}
+                iconBg="bg-purple-50"
+                title="Pharmacy"
+                desc="Manage medicines, medical products and inventory"
+                viewHref="/admin/pharmacy"
+                newHref="/admin/pharmacy/medicines/new"
+              />
+            </div>
           </div>
         )}
 
