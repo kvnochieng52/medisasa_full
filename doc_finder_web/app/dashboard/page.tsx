@@ -412,14 +412,24 @@ export default function DashboardPage() {
               newHref="/admin/surveys"
             />
             {isAdmin(user) && (
-              <AdminModuleCard
-                icon={<Shield className="w-5 h-5 text-purple-600" />}
-                iconBg="bg-purple-50"
-                title="User Management"
-                desc="Manage admins, service providers, and standard users"
-                viewHref="/admin/users"
-                newHref="/admin/users/new"
-              />
+              <>
+                <AdminModuleCard
+                  icon={<Shield className="w-5 h-5 text-purple-600" />}
+                  iconBg="bg-purple-50"
+                  title="Users"
+                  desc="All accounts — admins, service providers, and standard users"
+                  viewHref="/admin/users"
+                  newHref="/admin/users/new"
+                />
+                <AdminModuleCard
+                  icon={<Stethoscope className="w-5 h-5 text-blue-600" />}
+                  iconBg="bg-blue-50"
+                  title="Service Providers"
+                  desc="Approve, decline, and manage doctor accounts"
+                  viewHref="/admin/service-providers"
+                  newHref="/admin/users/new?type=2"
+                />
+              </>
             )}
           </div>
         )}

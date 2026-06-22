@@ -38,8 +38,12 @@ const SECTIONS: { heading: string; subtitle: string; items: AdminCard[] }[] = [
     subtitle: "Users, service providers, and patient communication",
     items: [
       {
-        title: "User Management", desc: "Manage admins, service providers, and standard users",
+        title: "Users", desc: "All accounts — standard users, admins, service providers",
         href: "/admin/users", icon: Shield, iconBg: "bg-purple-50", iconColor: "text-purple-600", adminOnly: true,
+      },
+      {
+        title: "Service Providers", desc: "Approve, decline, and manage doctor accounts",
+        href: "/admin/service-providers", icon: Stethoscope, iconBg: "bg-blue-50", iconColor: "text-blue-600", adminOnly: true,
       },
     ],
   },
