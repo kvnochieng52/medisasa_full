@@ -10,8 +10,19 @@ import { Loader2, ArrowLeft, Save } from "lucide-react";
 import UserForm, { UserFormValues } from "../../user-form";
 
 interface SpecRef { id: number; name: string }
-interface UserDetail extends UserFormValues {
+interface UserDetail {
   id: number;
+  name: string;
+  email: string;
+  telephone?: string | null;
+  id_number?: string | null;
+  address?: string | null;
+  dob?: string | null;
+  account_type: number;
+  licence_number?: string | null;
+  professional_bio?: string | null;
+  is_active: number | boolean;
+  sp_approved?: number | null;
   specializations?: SpecRef[];
 }
 
