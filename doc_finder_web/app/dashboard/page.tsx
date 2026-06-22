@@ -49,7 +49,7 @@ interface ScreeningHistory {
 }
 
 function isAdmin(u: UserData) {
-  return u.account_type === 3;
+  return Number(u.account_type) === 3;
 }
 function isServiceProvider(u: UserData) {
   return u.account_type === 2 || u.account_type === "serviceProvider";

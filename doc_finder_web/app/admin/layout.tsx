@@ -15,8 +15,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (raw) {
       try {
         const user = JSON.parse(raw);
-        const isAdmin = user.account_type === 3;
-        const isSP = user.account_type === 2 || user.account_type === "serviceProvider";
+        const isAdmin = Number(user.account_type) === 3;
+        const isSP = Number(user.account_type) === 2 || user.account_type === "serviceProvider";
         const isApprovedSP = isSP && user.sp_approved;
         if (!isAdmin && !isApprovedSP) {
           router.replace("/dashboard");
