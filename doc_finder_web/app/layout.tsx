@@ -9,6 +9,10 @@ export const metadata: Metadata = {
     "Find qualified doctors, hospitals, pharmacies, and support groups near you. Book appointments and get healthcare delivered.",
   keywords: "medisasa, doctor finder, healthcare, hospital, pharmacy, appointments, telemedicine",
   applicationName: "MediSasa",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -115,9 +115,7 @@ function EmailConfirmationContent() {
         <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10">
           {/* Header */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center shadow-md mb-4">
-              <Heart className="w-8 h-8 text-white" fill="white" />
-            </div>
+            <img src="/logo.png" alt="MediSasa" className="w-16 h-16 rounded-2xl object-cover shadow-md mb-4" />
             <h1 className="text-2xl font-bold text-gray-900">MediSasa</h1>
           </div>
 

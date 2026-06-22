@@ -31,9 +31,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" fill="white" />
-              </div>
+              <img src="/logo.png" alt="MediSasa" className="w-9 h-9 rounded-xl object-cover" />
               <span className="font-bold text-xl text-white">
                 Medi<span className="text-brand-400">Sasa</span>
               </span>
