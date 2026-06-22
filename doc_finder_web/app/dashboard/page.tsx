@@ -8,7 +8,7 @@ import {
   Stethoscope, Pill, Users, Building2, Calendar, Heart,
   ChevronRight, UserCircle, Clock, ShieldCheck, Plus,
   Sparkles, AlertTriangle, Loader2, CheckCircle2,
-  Brain, BookOpen,
+  Brain, BookOpen, Shield,
 } from "lucide-react";
 import { getGreeting } from "@/lib/utils";
 import api from "@/lib/api";
@@ -410,6 +410,16 @@ export default function DashboardPage() {
               viewHref="/admin/surveys"
               newHref="/admin/surveys"
             />
+            {isAdmin(user) && (
+              <AdminModuleCard
+                icon={<Shield className="w-5 h-5 text-purple-600" />}
+                iconBg="bg-purple-50"
+                title="User Management"
+                desc="Manage admins, service providers, and standard users"
+                viewHref="/admin/users"
+                newHref="/admin/users/new"
+              />
+            )}
           </div>
         )}
       </div>

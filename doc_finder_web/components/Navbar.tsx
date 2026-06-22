@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   ChevronDown,
   LayoutDashboard,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useCart } from "@/lib/context/CartContext";
@@ -135,6 +136,19 @@ export default function Navbar() {
                         <LayoutDashboard className="w-4 h-4" />
                         Appointments
                       </Link>
+                      {Number((user as { account_type?: number | string | null }).account_type) === 3 && (
+                        <>
+                          <hr className="my-1 border-gray-100" />
+                          <Link
+                            href="/admin/users"
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-semibold"
+                            onClick={() => setDropdownOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            Admin Panel
+                          </Link>
+                        </>
+                      )}
                       <hr className="my-1 border-gray-100" />
                       <button
                         onClick={() => { logout(); setDropdownOpen(false); }}

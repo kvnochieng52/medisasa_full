@@ -67,6 +67,18 @@ Route::middleware(['api'])->group(function () {
         Route::delete('/surveys/{id}', [SurveyController::class, 'destroy']);
         Route::get('/admin/surveys', [SurveyController::class, 'adminIndex']);
         Route::get('/admin/surveys/{id}', [SurveyController::class, 'adminShow']);
+
+        // Admin: user management
+        Route::get('/admin/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);
+        Route::get('/admin/users/specializations', [\App\Http\Controllers\Api\AdminUserController::class, 'specializations']);
+        Route::get('/admin/users/{id}', [\App\Http\Controllers\Api\AdminUserController::class, 'show']);
+        Route::post('/admin/users', [\App\Http\Controllers\Api\AdminUserController::class, 'store']);
+        Route::put('/admin/users/{id}', [\App\Http\Controllers\Api\AdminUserController::class, 'update']);
+        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Api\AdminUserController::class, 'destroy']);
+        Route::patch('/admin/users/{id}/toggle-status', [\App\Http\Controllers\Api\AdminUserController::class, 'toggleStatus']);
+        Route::patch('/admin/users/{id}/approve', [\App\Http\Controllers\Api\AdminUserController::class, 'approveServiceProvider']);
+        Route::patch('/admin/users/{id}/decline', [\App\Http\Controllers\Api\AdminUserController::class, 'declineServiceProvider']);
+        Route::get('/admin/user-documents/{id}/url', [\App\Http\Controllers\Api\AdminUserController::class, 'documentUrl']);
         Route::get('/my-survey-responses', [SurveyController::class, 'myResponses']);
 
         Route::get('/user-profile', [ProfileController::class, 'userProfile']);
