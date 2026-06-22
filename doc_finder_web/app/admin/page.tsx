@@ -39,11 +39,11 @@ const SECTIONS: { heading: string; subtitle: string; items: AdminCard[] }[] = [
     items: [
       {
         title: "Users", desc: "All accounts — standard users, admins, service providers",
-        href: "/admin/users", icon: Shield, iconBg: "bg-purple-50", iconColor: "text-purple-600", adminOnly: true,
+        href: "/admin/users", icon: Shield, iconBg: "bg-purple-50", iconColor: "text-purple-600",
       },
       {
         title: "Service Providers", desc: "Approve, decline, and manage doctor accounts",
-        href: "/admin/service-providers", icon: Stethoscope, iconBg: "bg-blue-50", iconColor: "text-blue-600", adminOnly: true,
+        href: "/admin/service-providers", icon: Stethoscope, iconBg: "bg-blue-50", iconColor: "text-blue-600",
       },
     ],
   },

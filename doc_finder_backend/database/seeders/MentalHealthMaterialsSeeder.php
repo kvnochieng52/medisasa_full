@@ -10,7 +10,11 @@ class MentalHealthMaterialsSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminId = User::where('email', 'admin@docfinder.com')->value('id') ?? 1;
+        // Pick any admin account; fall back to user id 1 if none exists yet.
+        $adminId = User::where('account_type', 3)->orderBy('id')->value('id')
+            ?? User::where('email', 'superadmin@docfinder.com')->value('id')
+            ?? User::orderBy('id')->value('id')
+            ?? 1;
 
         $materials = [
             [

@@ -33,44 +33,41 @@ class RolePermissionSeeder extends Seeder
             'dashboard-access',
         ];
 
+        // Idempotent: firstOrCreate skips existing rows so re-running the
+        // seeder doesn't blow up with "permission already exists".
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // Create roles and assign permissions
-        $adminRole = Role::create(['name' => 'Admin']);
-        $serviceProviderRole = Role::create(['name' => 'Service Provider']);
-        $standardRole = Role::create(['name' => 'Standard']);
+        $adminRole = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
+        $serviceProviderRole = Role::firstOrCreate(['name' => 'Service Provider', 'guard_name' => 'web']);
+        $standardRole = Role::firstOrCreate(['name' => 'Standard', 'guard_name' => 'web']);
 
-        // Admin gets all permissions
-        $adminRole->givePermissionTo(Permission::all());
+        // Sync (not give) so we keep the role's permissions in sync with what's listed here
+        // even if the lists change between runs.
+        $adminRole->syncPermissions(Permission::all());
 
-        // Service Provider permissions
-        $serviceProviderRole->givePermissionTo([
+        $serviceProviderRole->syncPermissions([
             'facility-list',
             'facility-create',
             'facility-edit',
             'dashboard-access',
         ]);
 
-        // Standard user permissions
-        $standardRole->givePermissionTo([
+        $standardRole->syncPermissions([
             'dashboard-access',
         ]);
 
-        // Assign roles to existing users based on their account_type
-        $users = User::all();
-        foreach ($users as $user) {
-            switch ($user->account_type) {
-                case 1:
-                    $user->assignRole('Standard');
-                    break;
-                case 2:
-                    $user->assignRole('Service Provider');
-                    break;
-                case 3:
-                    $user->assignRole('Admin');
-                    break;
+        // Assign roles to existing users based on account_type (guarded against duplicate assignment).
+        foreach (User::all() as $user) {
+            $roleName = match ((int) $user->account_type) {
+                1 => 'Standard',
+                2 => 'Service Provider',
+                3 => 'Admin',
+                default => null,
+            };
+            if ($roleName && !$user->hasRole($roleName)) {
+                $user->assignRole($roleName);
             }
         }
     }

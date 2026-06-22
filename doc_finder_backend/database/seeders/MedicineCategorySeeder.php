@@ -197,27 +197,37 @@ class MedicineCategorySeeder extends Seeder
             $subcategoriesData = $categoryData['subcategories'];
             unset($categoryData['subcategories']);
 
-            $category = MedicineCategory::create($categoryData);
+            // Idempotent: keyed by name so re-runs update existing rows
+            // rather than failing on the unique slug constraint.
+            $category = MedicineCategory::updateOrCreate(
+                ['name' => $categoryData['name']],
+                $categoryData
+            );
 
             $sortOrder = 1;
             foreach ($subcategoriesData as $subcategoryName) {
-                $slug = \Illuminate\Support\Str::slug($subcategoryName);
-                
-                // Check if slug exists and make it unique
-                $counter = 1;
-                $originalSlug = $slug;
-                while (MedicineSubcategory::where('slug', $slug)->exists()) {
-                    $slug = $originalSlug . '-' . $counter;
-                    $counter++;
+                // The slug column has a global unique constraint, so the
+                // same subcategory name in two different categories needs
+                // distinct slugs. Find or create by (category_id, name),
+                // then assign a unique slug afterwards.
+                $sub = MedicineSubcategory::firstOrNew(
+                    ['category_id' => $category->id, 'name' => $subcategoryName],
+                );
+
+                if (!$sub->exists) {
+                    $base = \Illuminate\Support\Str::slug($subcategoryName);
+                    $slug = $base;
+                    $i = 1;
+                    while (MedicineSubcategory::where('slug', $slug)->exists()) {
+                        $slug = "{$base}-{$i}";
+                        $i++;
+                    }
+                    $sub->slug = $slug;
                 }
-                
-                MedicineSubcategory::create([
-                    'category_id' => $category->id,
-                    'name' => $subcategoryName,
-                    'slug' => $slug,
-                    'description' => 'Subcategory for ' . $subcategoryName,
-                    'sort_order' => $sortOrder++,
-                ]);
+
+                $sub->description = 'Subcategory for ' . $subcategoryName;
+                $sub->sort_order = $sortOrder++;
+                $sub->save();
             }
         }
     }

@@ -384,54 +384,56 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Admin module cards (admins always, approved SPs with subscription) */}
-        {user && (isAdmin(user) || (isApprovedSP(user) && !subLoading && hasActiveSub)) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <AdminModuleCard
-              icon={<Brain className="w-5 h-5 text-violet-600" />}
-              iconBg="bg-violet-50"
-              title="Mental Health Materials"
-              desc="Upload and manage awareness resources"
-              viewHref="/admin/mental-health"
-              newHref="/admin/mental-health"
-            />
-            <AdminModuleCard
-              icon={<BookOpen className="w-5 h-5 text-indigo-600" />}
-              iconBg="bg-indigo-50"
-              title="Articles & Blogs"
-              desc="Write and publish health articles"
-              viewHref="/admin/blogs"
-              newHref="/admin/blogs"
-            />
-            <AdminModuleCard
-              icon={<Heart className="w-5 h-5 text-pink-600" />}
-              iconBg="bg-pink-50"
-              title="Surveys & Screenings"
-              desc="Create and manage mental health screening tools"
-              viewHref="/admin/surveys"
-              newHref="/admin/surveys"
-            />
-            {isAdmin(user) && (
-              <>
-                <AdminModuleCard
-                  icon={<Shield className="w-5 h-5 text-purple-600" />}
-                  iconBg="bg-purple-50"
-                  title="Users"
-                  desc="All accounts — admins, service providers, and standard users"
-                  viewHref="/admin/users"
-                  newHref="/admin/users/new"
-                />
-                <AdminModuleCard
-                  icon={<Stethoscope className="w-5 h-5 text-blue-600" />}
-                  iconBg="bg-blue-50"
-                  title="Service Providers"
-                  desc="Approve, decline, and manage doctor accounts"
-                  viewHref="/admin/service-providers"
-                  newHref="/admin/users/new?type=2"
-                />
-              </>
-            )}
-          </div>
+        {/* Admin module cards — admins + approved SPs (backend gates destructive actions) */}
+        {user && (isAdmin(user) || isApprovedSP(user)) && (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-5 h-5 text-purple-500" />
+              <h2 className="text-lg font-bold text-gray-800">Administration</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <AdminModuleCard
+                icon={<Shield className="w-5 h-5 text-purple-600" />}
+                iconBg="bg-purple-50"
+                title="Users"
+                desc="All accounts — admins, service providers, and standard users"
+                viewHref="/admin/users"
+                newHref="/admin/users/new"
+              />
+              <AdminModuleCard
+                icon={<Stethoscope className="w-5 h-5 text-blue-600" />}
+                iconBg="bg-blue-50"
+                title="Service Providers"
+                desc="Approve, decline, and manage doctor accounts"
+                viewHref="/admin/service-providers"
+                newHref="/admin/users/new?type=2"
+              />
+              <AdminModuleCard
+                icon={<Brain className="w-5 h-5 text-violet-600" />}
+                iconBg="bg-violet-50"
+                title="Mental Health Materials"
+                desc="Upload and manage awareness resources"
+                viewHref="/admin/mental-health"
+                newHref="/admin/mental-health"
+              />
+              <AdminModuleCard
+                icon={<BookOpen className="w-5 h-5 text-indigo-600" />}
+                iconBg="bg-indigo-50"
+                title="Articles & Blogs"
+                desc="Write and publish health articles"
+                viewHref="/admin/blogs"
+                newHref="/admin/blogs"
+              />
+              <AdminModuleCard
+                icon={<Heart className="w-5 h-5 text-pink-600" />}
+                iconBg="bg-pink-50"
+                title="Surveys & Screenings"
+                desc="Create and manage mental health screening tools"
+                viewHref="/admin/surveys"
+                newHref="/admin/surveys"
+              />
+            </div>
+          </>
         )}
 
         {/* Reference data — admin + approved SPs (same rights as Articles & Surveys above) */}
