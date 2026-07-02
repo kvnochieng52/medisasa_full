@@ -1,6 +1,6 @@
 import 'package:xyvra_health/pages/find_doctor/find_doctor_page.dart';
+import 'package:xyvra_health/pages/find_facility/facility_results_page.dart';
 import 'package:xyvra_health/pages/find_hospital/find_hospital_page.dart';
-import 'package:xyvra_health/pages/lab/find_lab_page.dart';
 import 'package:xyvra_health/pages/shop/medicine_shop_page.dart';
 import 'package:xyvra_health/pages/support_group/find_support_group.dart';
 import 'package:flutter/material.dart';
@@ -192,13 +192,13 @@ class FindSectionWidget extends StatelessWidget {
                 buildIconWithTitle(
                   'assets/images/lab.png',
                   'Lab',
-                  const FindLabPage(serviceType: LabServiceType.lab),
+                  const FacilityResultsPage(quickFilter: FacilityQuickFilter.lab),
                   context,
                 ),
                 buildIconTile(
                   Icons.medical_information,
                   'Radiology',
-                  const FindLabPage(serviceType: LabServiceType.radiology),
+                  const FacilityResultsPage(quickFilter: FacilityQuickFilter.radiology),
                   context,
                 ),
               ],

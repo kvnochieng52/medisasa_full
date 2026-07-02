@@ -6,6 +6,7 @@ import 'package:xyvra_health/auth_service.dart';
 import 'package:xyvra_health/shared/subscription_gate.dart';
 import 'package:xyvra_health/pages/prescriptions/new_lab_prescription_page.dart';
 import 'package:xyvra_health/pages/prescriptions/new_medication_prescription_page.dart';
+import 'package:xyvra_health/pages/prescriptions/new_radiology_prescription_page.dart';
 import 'package:intl/intl.dart';
 
 class DoctorAppointmentsPage extends StatefulWidget {
@@ -786,6 +787,31 @@ class _DoctorAppointmentsPageState extends State<DoctorAppointmentsPage> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => NewRadiologyPrescriptionPage(
+                              appointmentId: appointment['id'] is int
+                                  ? appointment['id']
+                                  : int.tryParse('${appointment['id']}'),
+                              patientName: appointment['patient_name'],
+                              patientEmail: appointment['patient_email'],
+                              patientPhone: appointment['patient_telephone'],
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.medical_information, size: 18, color: Color(0xFFf43f5e)),
+                        label: const Text('Radiology Order', style: TextStyle(color: Color(0xFFf43f5e))),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFf43f5e)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
                     ),
                   ],
 

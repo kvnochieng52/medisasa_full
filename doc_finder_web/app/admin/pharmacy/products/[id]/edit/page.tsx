@@ -7,6 +7,7 @@ import { ChevronRight, Loader2, Upload, ShieldAlert, ChevronDown } from "lucide-
 import api, { getImageUrl } from "@/lib/api";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
+import FacilityPicker from "@/components/admin/FacilityPicker";
 
 interface Category { id: number; name: string }
 interface SubCategory { id: number; name: string }
@@ -35,7 +36,7 @@ export default function EditMedicalProductPage() {
 
   const [form, setForm] = useState({
     name: "", batch_no: "", description: "", cost: "", stock_quantity: "0",
-    category_id: "", subcategory_id: "", manufacturer: "",
+    category_id: "", subcategory_id: "", facility_id: "", manufacturer: "",
     strength: "", dosage_form: "", manufacturing_date: "", expiry_date: "",
     storage_conditions: "", usage_instructions: "", barcode: "",
     weight: "", unit_of_measure: "pieces", minimum_stock_level: "10",
@@ -56,6 +57,7 @@ export default function EditMedicalProductPage() {
       setExistingImage(getImageUrl((p.image_url || p.photo) as string));
       const catId = p.category_id ? String(p.category_id) : "";
       const subId = p.subcategory_id ? String(p.subcategory_id) : "";
+      const facId = p.facility_id != null ? String(p.facility_id) : "";
 
       const toStr = (v: unknown) => v ? String(v) : "";
       const toArr = (v: unknown): string => Array.isArray(v) ? v.join(", ") : toStr(v);
@@ -68,6 +70,7 @@ export default function EditMedicalProductPage() {
         stock_quantity: toStr(p.stock_quantity) || "0",
         category_id: catId,
         subcategory_id: subId,
+        facility_id: facId,
         manufacturer: toStr(p.manufacturer),
         strength: toStr(p.strength),
         dosage_form: toStr(p.dosage_form),
@@ -129,6 +132,7 @@ export default function EditMedicalProductPage() {
     if (!form.batch_no.trim()) { toast.error("Batch number is required"); return; }
     if (!form.cost) { toast.error("Cost is required"); return; }
     if (!form.category_id) { toast.error("Category is required"); return; }
+    if (!form.facility_id) { toast.error("Facility is required"); return; }
 
     setSaving(true);
     try {
@@ -140,6 +144,7 @@ export default function EditMedicalProductPage() {
       fd.append("batch_no", form.batch_no.trim());
       fd.append("cost", form.cost);
       fd.append("category_id", form.category_id);
+      fd.append("facility_id", form.facility_id);
       fd.append("stock_quantity", form.stock_quantity);
       fd.append("status", form.status);
       fd.append("unit_of_measure", form.unit_of_measure);
@@ -228,6 +233,12 @@ export default function EditMedicalProductPage() {
                 <input type="text" value={form.batch_no} onChange={e => set("batch_no", e.target.value)} className={inputCls} />
               </Field>
             </div>
+            <FacilityPicker
+              value={form.facility_id}
+              onChange={id => set("facility_id", id)}
+              hint="Admins can pick any facility; providers can only pick their own."
+            />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Category" required>
                 <div className="relative">

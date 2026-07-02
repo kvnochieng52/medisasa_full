@@ -82,4 +82,12 @@ class Facility extends Model
             'insurance_id'
         )->withTimestamps()->withPivot('created_by', 'updated_by');
     }
+
+    /**
+     * Services this facility offers, with prices.
+     */
+    public function offeredServices()
+    {
+        return $this->hasMany(FacilityOfferedService::class);
+    }
 }

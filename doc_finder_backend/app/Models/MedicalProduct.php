@@ -19,6 +19,7 @@ class MedicalProduct extends Model
         'category',
         'category_id',
         'subcategory_id',
+        'facility_id',
         'photo',
         'cost',
         'stock_quantity',
@@ -198,5 +199,10 @@ class MedicalProduct extends Model
     public function subcategory(): BelongsTo
     {
         return $this->belongsTo(MedicineSubcategory::class, 'subcategory_id');
+    }
+
+    public function facility(): BelongsTo
+    {
+        return $this->belongsTo(Facility::class);
     }
 }

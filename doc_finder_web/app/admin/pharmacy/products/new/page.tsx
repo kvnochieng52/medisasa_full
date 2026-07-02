@@ -7,6 +7,7 @@ import { ChevronRight, Loader2, Upload, ShoppingBag, ChevronDown, ShieldAlert } 
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
+import FacilityPicker from "@/components/admin/FacilityPicker";
 
 interface Category { id: number; name: string }
 interface SubCategory { id: number; name: string }
@@ -32,7 +33,7 @@ export default function NewMedicalProductPage() {
 
   const [form, setForm] = useState({
     name: "", batch_no: "", description: "", cost: "", stock_quantity: "0",
-    category_id: "", subcategory_id: "", manufacturer: "",
+    category_id: "", subcategory_id: "", facility_id: "", manufacturer: "",
     strength: "", dosage_form: "", manufacturing_date: "", expiry_date: "",
     storage_conditions: "", usage_instructions: "", barcode: "",
     weight: "", unit_of_measure: "pieces", minimum_stock_level: "10",
@@ -74,6 +75,7 @@ export default function NewMedicalProductPage() {
     if (!form.batch_no.trim()) { toast.error("Batch number is required"); return; }
     if (!form.cost) { toast.error("Cost is required"); return; }
     if (!form.category_id) { toast.error("Category is required"); return; }
+    if (!form.facility_id) { toast.error("Facility is required"); return; }
     if (!form.stock_quantity) { toast.error("Stock quantity is required"); return; }
 
     setSaving(true);
@@ -85,6 +87,7 @@ export default function NewMedicalProductPage() {
       fd.append("batch_no", form.batch_no.trim());
       fd.append("cost", form.cost);
       fd.append("category_id", form.category_id);
+      fd.append("facility_id", form.facility_id);
       fd.append("stock_quantity", form.stock_quantity);
       fd.append("status", form.status);
       fd.append("unit_of_measure", form.unit_of_measure);
@@ -170,6 +173,12 @@ export default function NewMedicalProductPage() {
                   placeholder="e.g. BATCH-2025-001" className={inputCls} />
               </Field>
             </div>
+            <FacilityPicker
+              value={form.facility_id}
+              onChange={id => set("facility_id", id)}
+              hint="Admins can pick any facility; providers can only pick their own."
+            />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Category" required>
                 <div className="relative">

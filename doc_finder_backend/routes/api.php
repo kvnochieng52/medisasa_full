@@ -248,6 +248,11 @@ Route::middleware(['api'])->group(function () {
         Route::put('/admin/reference/insurances/{id}', [AdminReferenceController::class, 'updateInsurance']);
         Route::delete('/admin/reference/insurances/{id}', [AdminReferenceController::class, 'destroyInsurance']);
 
+        Route::get('/admin/reference/facility-services', [AdminReferenceController::class, 'indexFacilityServices']);
+        Route::post('/admin/reference/facility-services', [AdminReferenceController::class, 'storeFacilityService']);
+        Route::put('/admin/reference/facility-services/{id}', [AdminReferenceController::class, 'updateFacilityService']);
+        Route::delete('/admin/reference/facility-services/{id}', [AdminReferenceController::class, 'destroyFacilityService']);
+
         Route::get('/admin/reference/group-categories', [AdminReferenceController::class, 'indexGroupCategories']);
         Route::post('/admin/reference/group-categories', [AdminReferenceController::class, 'storeGroupCategory']);
         Route::put('/admin/reference/group-categories/{id}', [AdminReferenceController::class, 'updateGroupCategory']);
@@ -276,6 +281,13 @@ Route::middleware(['api'])->group(function () {
         Route::get('/prescriptions/lab/{id}', [PrescriptionController::class, 'showLab']);
         Route::get('/prescriptions/lab/{id}/pdf', [PrescriptionController::class, 'pdfLab']);
         Route::post('/prescriptions/lab/{id}/email', [PrescriptionController::class, 'emailLab']);
+
+        // Prescriptions (radiology)
+        Route::get('/prescriptions/radiology', [PrescriptionController::class, 'indexRadiology']);
+        Route::post('/prescriptions/radiology', [PrescriptionController::class, 'storeRadiology']);
+        Route::get('/prescriptions/radiology/{id}', [PrescriptionController::class, 'showRadiology']);
+        Route::get('/prescriptions/radiology/{id}/pdf', [PrescriptionController::class, 'pdfRadiology']);
+        Route::post('/prescriptions/radiology/{id}/email', [PrescriptionController::class, 'emailRadiology']);
 
         // Subscription routes (authenticated)
         Route::get('/subscription/status', [SubscriptionController::class, 'status']);
@@ -358,6 +370,7 @@ Route::middleware(['api'])->group(function () {
     Route::get('/facility-types', [FacilityController::class, 'getFacilityTypes']);
     Route::get('/facility-levels', [FacilityController::class, 'getFacilityLevels']);
     Route::get('/insurances', [FacilityController::class, 'getInsurances']);
+    Route::get('/facility-services', [FacilityController::class, 'getFacilityServices']);
 
     // Support group finder routes (public access)
     Route::get('/support-groups/public', [GroupController::class, 'getPublicGroups']);

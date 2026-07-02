@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   Calendar, Clock, User, Stethoscope, RefreshCw,
   Video, Building2, CheckCircle2, XCircle, AlertCircle,
-  ChevronRight, Plus, Pill, FlaskConical,
+  ChevronRight, Plus, Pill, FlaskConical, Scan,
 } from "lucide-react";
 import api, { getImageUrl } from "@/lib/api";
 import { getInitials } from "@/lib/utils";
@@ -261,6 +261,20 @@ export default function AppointmentsPage() {
                           className="inline-flex items-center gap-1 text-xs font-semibold text-purple-500 hover:text-purple-600 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition-colors"
                         >
                           <FlaskConical className="w-3.5 h-3.5" /> Lab Order
+                        </Link>
+                        <Link
+                          href={{
+                            pathname: "/prescriptions/radiology/new",
+                            query: {
+                              appointment_id: appt.id,
+                              patient_name: appt.patient_name,
+                              patient_email: appt.patient_email ?? "",
+                              patient_phone: appt.patient_telephone ?? "",
+                            },
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-colors"
+                        >
+                          <Scan className="w-3.5 h-3.5" /> Radiology Order
                         </Link>
                       </div>
                     )}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
+use App\Models\FacilityOfferedService;
 use App\Models\FacilitySpeciality;
 use App\Models\User;
 use App\Models\Symptom;
@@ -92,10 +93,13 @@ class FacilityController extends Controller
                 $facility->insurances()->attach($insuranceData);
             }
 
+            // Services offered (with per-facility price / title / description)
+            $this->syncOfferedServices($facility, $request->input('services', []));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Facility created successfully',
-                'facility' => $facility
+                'facility' => $facility->fresh(['offeredServices.service'])
             ], 201);
         } catch (\Exception $e) {
             Log::error('Error saving facility details', [
@@ -215,9 +219,13 @@ class FacilityController extends Controller
                 ], 401);
             }
 
-            $query = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances']) // Now this relationship exists
-                ->where('created_by', $user->id)
+            $query = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances', 'offeredServices.service'])
                 ->where('is_active', 1);
+
+            // Admins see every facility; everyone else only their own.
+            if ((int) $user->account_type !== 3) {
+                $query->where('created_by', $user->id);
+            }
 
             // Add search functionality
             if ($request->has('search')) {
@@ -261,7 +269,7 @@ class FacilityController extends Controller
                 ], 401);
             }
 
-            $facility = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances'])
+            $facility = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances', 'offeredServices.service'])
                 ->where('id', $id)
                 ->where('created_by', $user->id)
                 ->first();
@@ -366,10 +374,15 @@ class FacilityController extends Controller
                 $facility->insurances()->sync($insuranceData);
             }
 
+            // Services (only touch if the client sent a `services` key)
+            if ($request->has('services')) {
+                $this->syncOfferedServices($facility, $request->input('services', []));
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Facility updated successfully',
-                'data' => $facility
+                'data' => $facility->fresh(['offeredServices.service'])
             ], 200);
         } catch (\Exception $e) {
             Log::error('Error updating facility', [
@@ -650,7 +663,7 @@ class FacilityController extends Controller
                 'conditions' => $conditions
             ]);
 
-            $query = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances'])
+            $query = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances', 'offeredServices.service'])
                 ->where('is_active', 1);
 
             // Filter by location
@@ -710,7 +723,7 @@ class FacilityController extends Controller
     public function getApprovedFacilities(Request $request)
     {
         try {
-            $query = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances'])
+            $query = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances', 'offeredServices.service'])
                 ->where('is_active', 1);
 
             // Add search functionality
@@ -758,7 +771,7 @@ class FacilityController extends Controller
     public function getPublicFacility($id)
     {
         try {
-            $facility = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances'])
+            $facility = Facility::with(['specialties', 'facilityType', 'facilityLevel', 'insurances', 'offeredServices.service'])
                 ->where('id', $id)
                 ->where('is_active', 1)
                 ->first();
@@ -906,5 +919,85 @@ class FacilityController extends Controller
                 'message' => 'Error fetching insurances'
             ], 500);
         }
+    }
+
+    /**
+     * Get all active facility services (public list for the create form).
+     */
+    public function getFacilityServices()
+    {
+        try {
+            $services = \App\Models\FacilityService::where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'description']);
+
+            return response()->json(['success' => true, 'data' => $services]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching facility services: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching facility services',
+            ], 500);
+        }
+    }
+
+    /**
+     * Replace the facility's offered-services set with the supplied list.
+     *
+     * Each item may be:
+     *   ['facility_service_id' => 12, 'title' => 'X-Ray', 'amount' => 1500]
+     *   ['title' => 'Custom on-site test', 'description' => '...', 'amount' => 900]
+     *
+     * Any existing services not present in the new list are deleted.
+     */
+    private function syncOfferedServices(Facility $facility, $services): void
+    {
+        if (!is_array($services)) return;
+
+        $keptIds = [];
+        foreach ($services as $s) {
+            $title = trim((string) ($s['title'] ?? ''));
+            if ($title === '') continue;
+
+            $data = [
+                'facility_id'         => $facility->id,
+                'facility_service_id' => isset($s['facility_service_id']) && $s['facility_service_id'] !== ''
+                                            ? (int) $s['facility_service_id']
+                                            : null,
+                'title'               => $title,
+                'description'         => isset($s['description']) && $s['description'] !== ''
+                                            ? (string) $s['description']
+                                            : null,
+                'amount'              => isset($s['amount']) && $s['amount'] !== '' && $s['amount'] !== null
+                                            ? (float) $s['amount']
+                                            : null,
+                'currency'            => isset($s['currency']) && $s['currency'] !== ''
+                                            ? (string) $s['currency']
+                                            : 'KES',
+                'is_active'           => array_key_exists('is_active', $s) ? (bool) $s['is_active'] : true,
+            ];
+
+            $existingId = isset($s['id']) ? (int) $s['id'] : null;
+            if ($existingId) {
+                $row = FacilityOfferedService::where('id', $existingId)
+                    ->where('facility_id', $facility->id)
+                    ->first();
+                if ($row) {
+                    $row->update($data);
+                    $keptIds[] = $row->id;
+                    continue;
+                }
+            }
+
+            $row = FacilityOfferedService::create($data);
+            $keptIds[] = $row->id;
+        }
+
+        // Remove any offerings that the client dropped
+        FacilityOfferedService::where('facility_id', $facility->id)
+            ->when(!empty($keptIds), fn($q) => $q->whereNotIn('id', $keptIds))
+            ->when(empty($keptIds), fn($q) => $q) // if empty, delete all
+            ->delete();
     }
 }

@@ -7,6 +7,8 @@ import 'lab_prescription_detail_page.dart';
 import 'medication_prescription_detail_page.dart';
 import 'new_lab_prescription_page.dart';
 import 'new_medication_prescription_page.dart';
+import 'new_radiology_prescription_page.dart';
+import 'radiology_prescription_detail_page.dart';
 
 class PrescriptionsHistoryPage extends StatefulWidget {
   const PrescriptionsHistoryPage({Key? key}) : super(key: key);
@@ -19,6 +21,7 @@ class _PrescriptionsHistoryPageState extends State<PrescriptionsHistoryPage>
     with SingleTickerProviderStateMixin {
   static const _brand = Color(0xFF008faf);
   static const _purple = Color(0xFF8b5cf6);
+  static const _rose = Color(0xFFf43f5e);
 
   late TabController _tabController;
   bool _loading = true;
@@ -27,11 +30,16 @@ class _PrescriptionsHistoryPageState extends State<PrescriptionsHistoryPage>
 
   List<MedicationPrescription> _medication = [];
   List<LabPrescription> _lab = [];
+  List<RadiologyPrescription> _radiology = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      // Rebuild so the FAB label / colour reflect the currently active tab.
+      if (mounted) setState(() {});
+    });
     _load();
   }
 
@@ -54,11 +62,13 @@ class _PrescriptionsHistoryPageState extends State<PrescriptionsHistoryPage>
       final results = await Future.wait([
         PrescriptionService.listMedication(),
         PrescriptionService.listLab(),
+        PrescriptionService.listRadiology(),
       ]);
       if (!mounted) return;
       setState(() {
         _medication = results[0] as List<MedicationPrescription>;
         _lab = results[1] as List<LabPrescription>;
+        _radiology = results[2] as List<RadiologyPrescription>;
         _loading = false;
       });
     } catch (e) {
@@ -70,13 +80,23 @@ class _PrescriptionsHistoryPageState extends State<PrescriptionsHistoryPage>
     }
   }
 
-  void _openNew(bool medication) async {
+  void _openNew(int tabIndex) async {
+    Widget page;
+    switch (tabIndex) {
+      case 0:
+        page = const NewMedicationPrescriptionPage();
+        break;
+      case 1:
+        page = const NewLabPrescriptionPage();
+        break;
+      case 2:
+      default:
+        page = const NewRadiologyPrescriptionPage();
+        break;
+    }
     final created = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            medication ? const NewMedicationPrescriptionPage() : const NewLabPrescriptionPage(),
-      ),
+      MaterialPageRoute(builder: (_) => page),
     );
     if (created == true) _load();
   }
@@ -98,20 +118,24 @@ class _PrescriptionsHistoryPageState extends State<PrescriptionsHistoryPage>
           tabs: const [
             Tab(text: 'Medication', icon: Icon(Icons.medication)),
             Tab(text: 'Lab orders', icon: Icon(Icons.biotech)),
+            Tab(text: 'Radiology', icon: Icon(Icons.medical_information)),
           ],
         ),
       ),
       floatingActionButton: _isDoctor
           ? Builder(builder: (context) {
               final tab = _tabController.index;
+              final label = tab == 0
+                  ? 'New medication Rx'
+                  : tab == 1
+                      ? 'New lab order'
+                      : 'New radiology order';
+              final color = tab == 0 ? _brand : tab == 1 ? _purple : _rose;
               return FloatingActionButton.extended(
-                onPressed: () => _openNew(tab == 0),
-                backgroundColor: tab == 0 ? _brand : _purple,
+                onPressed: () => _openNew(tab),
+                backgroundColor: color,
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: Text(
-                  tab == 0 ? 'New medication Rx' : 'New lab order',
-                  style: const TextStyle(color: Colors.white),
-                ),
+                label: Text(label, style: const TextStyle(color: Colors.white)),
               );
             })
           : null,
@@ -124,6 +148,7 @@ class _PrescriptionsHistoryPageState extends State<PrescriptionsHistoryPage>
                   children: [
                     _MedicationList(items: _medication, isDoctor: _isDoctor, onRefresh: _load),
                     _LabList(items: _lab, isDoctor: _isDoctor, onRefresh: _load),
+                    _RadiologyList(items: _radiology, isDoctor: _isDoctor, onRefresh: _load),
                   ],
                 ),
     );
@@ -215,6 +240,53 @@ class _LabList extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => LabPrescriptionDetailPage(prescriptionId: rx.id),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RadiologyList extends StatelessWidget {
+  final List<RadiologyPrescription> items;
+  final bool isDoctor;
+  final Future<void> Function() onRefresh;
+
+  const _RadiologyList({required this.items, required this.isDoctor, required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return _EmptyView(
+        icon: Icons.medical_information_outlined,
+        title: 'No radiology orders',
+        subtitle: isDoctor
+            ? 'Tap the button below to order imaging.'
+            : 'Your provider will share radiology orders here.',
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) {
+          final rx = items[i];
+          return _RxCard(
+            title: isDoctor ? rx.patientName : rx.prescriberName,
+            number: rx.prescriptionNumber,
+            date: rx.issuedDate,
+            color: const Color(0xFFf43f5e),
+            icon: Icons.medical_information,
+            chips: rx.items.take(3).map((it) => it.studyName).toList(),
+            subtitle: isDoctor ? (rx.patientEmail ?? '—') : rx.patientName,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RadiologyPrescriptionDetailPage(prescriptionId: rx.id),
               ),
             ),
           );

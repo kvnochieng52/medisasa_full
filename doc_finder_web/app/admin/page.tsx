@@ -96,6 +96,10 @@ const SECTIONS: { heading: string; subtitle: string; items: AdminCard[] }[] = [
         href: "/admin/facility-types", icon: Building2, iconBg: "bg-green-50", iconColor: "text-green-600",
       },
       {
+        title: "Facility Services", desc: "Catalogue of services facilities offer (Consultation, X-Ray, …)",
+        href: "/admin/facility-services", icon: Building2, iconBg: "bg-cyan-50", iconColor: "text-cyan-600",
+      },
+      {
         title: "Facility Levels", desc: "Health facility tier classifications",
         href: "/admin/facility-levels", icon: Layers, iconBg: "bg-teal-50", iconColor: "text-teal-600",
       },

@@ -12,28 +12,46 @@ import api, { getImageUrl } from "@/lib/api";
 
 type FacilityTypeFilter = "lab" | "radiology";
 
+/**
+ * Homepage quick filters — both scoped to a facility TYPE first, then a
+ * services fallback so facilities that offer the service but aren't
+ * classified under the exact type still show up.
+ *
+ *   Lab       → facility type "Labaratory & Radiology" (or containing "lab")
+ *                fallback: any offered service matching /lab|patholog/
+ *   Radiology → facility type "Radiology" (or "Diagnostic and Imaging")
+ *                fallback: any offered service matching /radiolog|imaging|
+ *                x-ray|mri|ct scan|ultrasound|mammogram/
+ */
 const TYPE_FILTERS: Record<FacilityTypeFilter, {
   label: string;
   matchType: RegExp;
-  matchSpecialty: RegExp;
+  matchService: RegExp;
   icon: typeof FlaskConical;
 }> = {
   lab: {
-    label: "Laboratories",
+    label: "Laboratory & Radiology",
     matchType: /\blab/i,
-    matchSpecialty: /\blab|patholog/i,
+    matchService: /\blab|patholog/i,
     icon: FlaskConical,
   },
   radiology: {
-    label: "Radiology & Imaging",
-    matchType: /imaging|radiolog|diagnostic/i,
-    matchSpecialty: /radiolog/i,
+    label: "Radiology",
+    matchType: /radiolog|imaging|diagnostic/i,
+    matchService: /radiolog|imaging|\bx[- ]?ray\b|mri|ct scan|ultrasound|mammogram/i,
     icon: Scan,
   },
 };
 
 interface Specialty { id: number; specialization_name: string }
 interface FacilityType { id: number; name: string }
+interface OfferedService {
+  id: number;
+  facility_service_id?: number | null;
+  title: string;
+  amount?: string | number | null;
+  service?: { id: number; name: string } | null;
+}
 
 interface Facility {
   id: number;
@@ -49,6 +67,7 @@ interface Facility {
   total_ratings?: number;
   facilityType?: FacilityType;
   specialties?: Specialty[];
+  offered_services?: OfferedService[];
 }
 
 type SortKey = "rating" | "name";
@@ -115,10 +134,20 @@ function HospitalsContent() {
 
     if (type) {
       const def = TYPE_FILTERS[type];
-      result = result.filter(f =>
-        (f.facilityType?.name && def.matchType.test(f.facilityType.name)) ||
-        f.specialties?.some(s => def.matchSpecialty.test(s.specialization_name))
-      );
+      result = result.filter(f => {
+        // Primary: facility type name matches
+        if (f.facilityType?.name && def.matchType.test(f.facilityType.name)) {
+          return true;
+        }
+        // Fallback: any offered service matches (by title or catalogue name)
+        if (f.offered_services?.some(os =>
+          def.matchService.test(os.title) ||
+          (os.service?.name && def.matchService.test(os.service.name))
+        )) {
+          return true;
+        }
+        return false;
+      });
     }
 
     if (query.trim()) {

@@ -496,6 +496,14 @@ export default function DashboardPage() {
                 newHref="/admin/facility-levels"
               />
               <AdminModuleCard
+                icon={<Building2 className="w-5 h-5 text-cyan-600" />}
+                iconBg="bg-cyan-50"
+                title="Facility Services"
+                desc="Catalogue of services facilities offer"
+                viewHref="/admin/facility-services"
+                newHref="/admin/facility-services"
+              />
+              <AdminModuleCard
                 icon={<ShieldCheck className="w-5 h-5 text-amber-600" />}
                 iconBg="bg-amber-50"
                 title="Insurances"

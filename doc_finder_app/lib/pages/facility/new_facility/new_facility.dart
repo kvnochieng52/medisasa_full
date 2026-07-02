@@ -37,12 +37,14 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
   final ImagePicker _picker = ImagePicker();
 
   bool _isLoading = false;
-  bool _isLoadingSpecialties = false;
+  bool _isLoadingFacilityServices = false;
   bool _isLoadingFacilityTypes = false;
   bool _isLoadingFacilityLevels = false;
   bool _isLoadingInsurances = false;
-  List<Map<String, dynamic>> _specialties = [];
-  List<int> _selectedSpecialtyIds = [];
+  // Catalogue of services (reference list) the SP picks from.
+  List<Map<String, dynamic>> _facilityServices = [];
+  // Services the SP has added to THIS facility (with title/description/amount).
+  List<Map<String, dynamic>> _offeredServices = [];
   List<Map<String, dynamic>> _facilityTypes = [];
   List<Map<String, dynamic>> _facilityLevels = [];
   List<Map<String, dynamic>> _insurances = [];
@@ -63,7 +65,7 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
   @override
   void initState() {
     super.initState();
-    _loadSpecialties();
+    _loadFacilityServices();
     _loadFacilityTypes();
     _loadFacilityLevels();
     _loadInsurances();
@@ -81,36 +83,45 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
     super.dispose();
   }
 
-  Future<void> _loadSpecialties() async {
+  Future<void> _loadFacilityServices() async {
     setState(() {
-      _isLoadingSpecialties = true;
+      _isLoadingFacilityServices = true;
     });
 
+    // /facility-services is a public endpoint — call it directly instead of
+    // via authenticatedRequest so a stale/missing token doesn't block loading.
+    final url = '${ApiConfig.baseUrl}/facility-services';
     try {
-      final response = await _authService.authenticatedRequest(
-        'GET',
-        '/specializations/active-for-facility',
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/json'},
       );
+
+      debugPrint('facility-services GET $url -> ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-
         if (responseData['success'] == true && responseData['data'] != null) {
           setState(() {
-            _specialties =
+            _facilityServices =
                 List<Map<String, dynamic>>.from(responseData['data']);
           });
+        } else {
+          _showMessage(
+              'Services list returned no data (${responseData['message'] ?? 'unknown'})',
+              isError: true);
         }
       } else {
-        _showMessage('Failed to load specialties', isError: true);
+        _showMessage('Failed to load services (HTTP ${response.statusCode})',
+            isError: true);
       }
     } catch (e) {
-      debugPrint('Error loading specialties: $e');
-      _showMessage('Network error loading specialties', isError: true);
+      debugPrint('Error loading facility services from $url: $e');
+      _showMessage('Network error loading services: $e', isError: true);
     }
 
     setState(() {
-      _isLoadingSpecialties = false;
+      _isLoadingFacilityServices = false;
     });
   }
 
@@ -237,9 +248,13 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
       return;
     }
 
-    if (_selectedSpecialtyIds.isEmpty) {
-      _showMessage('Please select at least one specialty', isError: true);
-      return;
+    // Services are optional but each row must have a title if present.
+    for (final s in _offeredServices) {
+      final title = (s['title'] ?? '').toString().trim();
+      if (title.isEmpty) {
+        _showMessage('Each service needs a title', isError: true);
+        return;
+      }
     }
 
     setState(() {
@@ -247,7 +262,7 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
     });
 
     try {
-      // First create the facility
+      // First create the facility (services go along in the same call)
       final facilityResponse = await _authService.authenticatedRequest(
         'POST',
         '/save-facility',
@@ -266,6 +281,17 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
           'facility_type_id': _selectedFacilityTypeId,
           'facility_level_id': _selectedFacilityLevelId,
           'facility_number': _facilityNumberController.text,
+          'services': _offeredServices.map((s) {
+            final rawAmount = (s['amount'] ?? '').toString().trim();
+            return {
+              'facility_service_id': s['facility_service_id'],
+              'title': (s['title'] ?? '').toString().trim(),
+              'description': (s['description'] ?? '').toString().trim().isEmpty
+                  ? null
+                  : (s['description'] ?? '').toString().trim(),
+              'amount': rawAmount.isEmpty ? null : double.tryParse(rawAmount),
+            };
+          }).toList(),
         },
       );
 
@@ -276,9 +302,6 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
         if (facilityData['success'] == true &&
             facilityData['facility'] != null) {
           final facilityId = facilityData['facility']['id'];
-
-          // Now save the facility specialties
-          await _saveFacilitySpecialties(facilityId);
 
           // Upload images if selected
           if (_logoImage != null) {
@@ -323,23 +346,46 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
     });
   }
 
-  Future<void> _saveFacilitySpecialties(int facilityId) async {
-    try {
-      final response = await _authService.authenticatedRequest(
-        'POST',
-        '/save-facility-specialties',
-        body: {
-          'facility_id': facilityId,
-          'specialty_ids': _selectedSpecialtyIds,
-        },
-      );
+  // Services helpers
+  void _addServiceFromCatalogue(int? id) {
+    if (id == null) return;
+    if (_offeredServices.any((s) => s['facility_service_id'] == id)) return;
+    final ref = _facilityServices.firstWhere(
+      (s) => s['id'] == id,
+      orElse: () => <String, dynamic>{},
+    );
+    if (ref.isEmpty) return;
+    setState(() {
+      _offeredServices.add({
+        'facility_service_id': id,
+        'title': ref['name'] ?? '',
+        'description': ref['description'] ?? '',
+        'amount': '',
+      });
+    });
+  }
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        debugPrint('Failed to save facility specialties');
-      }
-    } catch (e) {
-      debugPrint('Error saving facility specialties: $e');
-    }
+  void _addCustomService() {
+    setState(() {
+      _offeredServices.add({
+        'facility_service_id': null,
+        'title': '',
+        'description': '',
+        'amount': '',
+      });
+    });
+  }
+
+  void _updateService(int idx, String key, String value) {
+    setState(() {
+      _offeredServices[idx][key] = value;
+    });
+  }
+
+  void _removeService(int idx) {
+    setState(() {
+      _offeredServices.removeAt(idx);
+    });
   }
 
   Future<void> _uploadFacilityLogo(int facilityId) async {
@@ -431,16 +477,6 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
     );
   }
 
-  void _toggleSpecialty(int specialtyId) {
-    setState(() {
-      if (_selectedSpecialtyIds.contains(specialtyId)) {
-        _selectedSpecialtyIds.remove(specialtyId);
-      } else {
-        _selectedSpecialtyIds.add(specialtyId);
-      }
-    });
-  }
-
   void _toggleInsuranceCompany(int insuranceId) {
     setState(() {
       if (_selectedInsuranceIds.contains(insuranceId)) {
@@ -508,7 +544,7 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
                 SizedBox(height: 20),
                 _buildImageUploadSection(),
                 SizedBox(height: 20),
-                _buildSpecialtiesSection(),
+                _buildServicesSection(),
                 SizedBox(height: 20),
                 _buildInsuranceSection(),
                 SizedBox(height: 30),
@@ -927,99 +963,157 @@ class _NewFacilityPageState extends State<NewFacilityPage> {
     );
   }
 
-  Widget _buildSpecialtiesSection() {
+  Widget _buildServicesSection() {
+    final availableCatalogue = _facilityServices.where((s) {
+      return !_offeredServices.any((o) => o['facility_service_id'] == s['id']);
+    }).toList();
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Facility Specialties*',
+            'Services Offered',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
           ),
+          SizedBox(height: 4),
+          Text(
+            'Pick services from the catalogue or add your own. Each service has a title, optional description and price.',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          ),
           SizedBox(height: 10),
-          _isLoadingSpecialties
-              ? Container(
-                  padding: EdgeInsets.all(20),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF008faf),
-                    ),
+
+          if (_isLoadingFacilityServices)
+            Container(
+              padding: EdgeInsets.all(20),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF008faf)),
+              ),
+            )
+          else ...[
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Color(0xfff3f3f4),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: DropdownButton<int>(
+                isExpanded: true,
+                underline: SizedBox.shrink(),
+                hint: Text('Add from catalogue…'),
+                value: null,
+                items: availableCatalogue.map<DropdownMenuItem<int>>((s) {
+                  return DropdownMenuItem<int>(
+                    value: s['id'] as int,
+                    child: Text(s['name'] ?? '', overflow: TextOverflow.ellipsis),
+                  );
+                }).toList(),
+                onChanged: (id) => _addServiceFromCatalogue(id),
+              ),
+            ),
+            SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _addCustomService,
+              icon: Icon(Icons.add, color: Color(0xFF008faf)),
+              label: Text(
+                'Add custom service',
+                style: TextStyle(color: Color(0xFF008faf), fontWeight: FontWeight.w600),
+              ),
+              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
+            ),
+            SizedBox(height: 10),
+
+            if (_offeredServices.isEmpty)
+              Text(
+                'No services added yet.',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontStyle: FontStyle.italic),
+              )
+            else
+              ..._offeredServices.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final svc = entry.value;
+                final isCatalogue = svc['facility_service_id'] != null;
+                return Container(
+                  margin: EdgeInsets.only(bottom: 10),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade200),
                   ),
-                )
-              : _specialties.isEmpty
-                  ? Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: Color(0xfff3f3f4),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        'No specialties available',
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                    )
-                  : Container(
-                      padding: EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: Color(0xfff3f3f4),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            'Select specialties for this facility:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isCatalogue
+                                  ? Color(0xFF008faf).withOpacity(0.1)
+                                  : Colors.amber.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              isCatalogue ? 'Catalogue' : 'Custom',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isCatalogue ? Color(0xFF008faf) : Colors.orange.shade800,
+                              ),
                             ),
                           ),
-                          SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _specialties.map((specialty) {
-                              final isSelected = _selectedSpecialtyIds
-                                  .contains(specialty['id']);
-                              return GestureDetector(
-                                onTap: () => _toggleSpecialty(specialty['id']),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Color(0xFF008faf)
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? Color(0xFF008faf)
-                                          : Colors.grey.shade400,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    specialty['specialization_name'] ??
-                                        'Unknown',
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                          Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            onPressed: () => _removeService(idx),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
                           ),
                         ],
                       ),
-                    ),
+                      SizedBox(height: 8),
+                      TextFormField(
+                        initialValue: svc['title']?.toString() ?? '',
+                        onChanged: (v) => _updateService(idx, 'title', v),
+                        decoration: InputDecoration(
+                          labelText: 'Title *',
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextFormField(
+                        initialValue: svc['amount']?.toString() ?? '',
+                        onChanged: (v) => _updateService(idx, 'amount', v),
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Amount (KES)',
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextFormField(
+                        initialValue: svc['description']?.toString() ?? '',
+                        onChanged: (v) => _updateService(idx, 'description', v),
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          labelText: 'Description (optional)',
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+          ],
         ],
       ),
     );

@@ -2,27 +2,48 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConfig {
-  // PRODUCTION CONFIGURATION — single origin via nginx
-  // Laravel API at /api, storage at /storage, Next.js at /
+  // In debug builds, point at the developer's workstation. Which host to use
+  // depends on where the app is running:
+  //   - Android emulator:  10.0.2.2         (special alias for the host machine)
+  //   - iOS simulator:     127.0.0.1
+  //   - Physical device:   the workstation's LAN IP  (see `_lanIp` below)
+  //
+  // Update `_lanIp` if your workstation gets a new DHCP lease.
+  static const String _lanIp = '192.168.0.21';
+  static const String _apiPort = '8000';   // php artisan serve
+  static const String _webPort = '3001';   // next dev (see doc_finder_web/package.json)
 
   static const String _productionUrl = 'https://medisasa.co.ke';
 
+  /// Debug host — chosen by platform. On web (flutter run -d chrome) we always
+  /// hit localhost so the browser can talk to the local Laravel server.
+  static String get _debugHost {
+    if (kIsWeb) return 'localhost';
+    if (Platform.isAndroid) return '10.0.2.2';
+    if (Platform.isIOS || Platform.isMacOS) return _lanIp; // works for physical iPhones too
+    return _lanIp;
+  }
+
   static String get baseUrl {
-    return '$_productionUrl/api';
+    return kDebugMode
+        ? 'http://$_debugHost:$_apiPort/api'
+        : '$_productionUrl/api';
   }
 
   static String get webUrl {
-    return _productionUrl;
+    return kDebugMode
+        ? 'http://$_debugHost:$_apiPort'
+        : _productionUrl;
   }
 
-  // Next.js web frontend (same origin as the backend)
-  static const String _webFrontendUrl = 'https://medisasa.co.ke';
+  // Next.js web frontend
   static String get webAppUrl {
-    return _webFrontendUrl;
+    return kDebugMode
+        ? 'http://$_debugHost:$_webPort'
+        : _productionUrl;
   }
 
   // Get current configuration info for debugging

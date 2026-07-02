@@ -8,6 +8,8 @@ use App\Models\LabPrescription;
 use App\Models\LabPrescriptionItem;
 use App\Models\MedicationPrescription;
 use App\Models\MedicationPrescriptionItem;
+use App\Models\RadiologyPrescription;
+use App\Models\RadiologyPrescriptionItem;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -258,6 +260,133 @@ class PrescriptionController extends Controller
     }
 
     // ---------------------------------------------------------------------
+    // Radiology prescriptions
+    // ---------------------------------------------------------------------
+
+    public function storeRadiology(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || !$user->isServiceProvider()) {
+            return response()->json(['success' => false, 'message' => 'Only service providers can issue prescriptions.'], 403);
+        }
+
+        $data = $request->validate([
+            'appointment_id' => 'nullable|exists:appointments,id',
+            'clinic_name' => 'nullable|string|max:255',
+            'clinic_address' => 'nullable|string|max:500',
+            'patient_name' => 'required|string|max:255',
+            'patient_email' => 'nullable|email|max:255',
+            'patient_phone' => 'nullable|string|max:50',
+            'patient_dob' => 'nullable|date',
+            'patient_age' => 'nullable|integer|min:0|max:150',
+            'patient_sex' => 'nullable|in:male,female,other',
+            'clinical_information' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.study_name' => 'required|string|max:255',
+            'items.*.modality' => 'nullable|string|max:100',
+            'items.*.body_part' => 'nullable|string|max:100',
+            'items.*.side' => 'nullable|string|max:20',
+            'items.*.contrast' => 'nullable|in:none,with,without,oral',
+            'items.*.urgency' => 'nullable|in:routine,urgent,stat',
+            'items.*.clinical_indication' => 'nullable|string',
+            'items.*.notes' => 'nullable|string',
+        ]);
+
+        $rx = DB::transaction(function () use ($user, $data) {
+            $rx = RadiologyPrescription::create([
+                'prescription_number' => $this->generateNumber('RRX'),
+                'doctor_id' => $user->id,
+                'appointment_id' => $data['appointment_id'] ?? null,
+                'prescriber_name' => $user->name,
+                'prescriber_licence_number' => $user->licence_number,
+                'prescriber_phone' => $user->telephone,
+                'prescriber_email' => $user->email,
+                'clinic_name' => $data['clinic_name'] ?? null,
+                'clinic_address' => $data['clinic_address'] ?? null,
+                'patient_name' => $data['patient_name'],
+                'patient_email' => $data['patient_email'] ?? null,
+                'patient_phone' => $data['patient_phone'] ?? null,
+                'patient_dob' => $data['patient_dob'] ?? null,
+                'patient_age' => $data['patient_age'] ?? null,
+                'patient_sex' => $data['patient_sex'] ?? null,
+                'issued_date' => now()->toDateString(),
+                'clinical_information' => $data['clinical_information'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            foreach ($data['items'] as $item) {
+                RadiologyPrescriptionItem::create(array_merge(
+                    $item,
+                    [
+                        'radiology_prescription_id' => $rx->id,
+                        'urgency' => $item['urgency'] ?? 'routine',
+                        'contrast' => $item['contrast'] ?? 'none',
+                    ],
+                ));
+            }
+
+            return $rx->load('items');
+        });
+
+        return response()->json(['success' => true, 'data' => $rx], 201);
+    }
+
+    public function indexRadiology(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $query = RadiologyPrescription::with('items')->orderByDesc('issued_date');
+        $this->scopeToCurrentUser($query, $user);
+
+        $perPage = (int) $request->input('per_page', 20);
+        return response()->json([
+            'success' => true,
+            'data' => $query->paginate($perPage),
+        ]);
+    }
+
+    public function showRadiology(Request $request, $id)
+    {
+        $user = $request->user();
+        $rx = RadiologyPrescription::with('items')->findOrFail($id);
+        $this->authorizeView($rx, $user);
+        return response()->json(['success' => true, 'data' => $rx]);
+    }
+
+    public function pdfRadiology(Request $request, $id)
+    {
+        $user = $request->user();
+        $rx = RadiologyPrescription::with('items')->findOrFail($id);
+        $this->authorizeView($rx, $user);
+
+        $pdf = Pdf::loadView('prescriptions.radiology_pdf', [
+            'rx' => $rx,
+            'logoPath' => $this->logoPath(),
+        ]);
+
+        return $pdf->download($this->pdfFilename($rx));
+    }
+
+    public function emailRadiology(Request $request, $id)
+    {
+        $user = $request->user();
+        $rx = RadiologyPrescription::with('items')->findOrFail($id);
+        $this->authorizeView($rx, $user);
+
+        $request->validate(['email' => 'nullable|email']);
+        $to = $request->input('email') ?: $rx->patient_email;
+        if (!$to) {
+            return response()->json(['success' => false, 'message' => 'No recipient email provided.'], 422);
+        }
+
+        return $this->sendPrescriptionEmail($rx, $to, 'radiology');
+    }
+
+    // ---------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------
 
@@ -297,11 +426,27 @@ class PrescriptionController extends Controller
 
     private function sendPrescriptionEmail($rx, string $to, string $type)
     {
-        $view = $type === 'medication' ? 'prescriptions.medication_pdf' : 'prescriptions.lab_pdf';
+        $viewMap = [
+            'medication' => 'prescriptions.medication_pdf',
+            'lab'        => 'prescriptions.lab_pdf',
+            'radiology'  => 'prescriptions.radiology_pdf',
+        ];
+        $subjectMap = [
+            'medication' => 'Medication Prescription',
+            'lab'        => 'Lab Order',
+            'radiology'  => 'Radiology Order',
+        ];
+        $bodyMap = [
+            'medication' => 'medication prescription',
+            'lab'        => 'lab order',
+            'radiology'  => 'radiology order',
+        ];
+
+        $view = $viewMap[$type] ?? $viewMap['medication'];
         $pdf = Pdf::loadView($view, ['rx' => $rx, 'logoPath' => $this->logoPath()]);
         $pdfBinary = $pdf->output();
 
-        $subject = ($type === 'medication' ? 'Medication Prescription' : 'Lab Order') . ' from ' . ($rx->prescriber_name ?: 'MediSasa');
+        $subject = ($subjectMap[$type] ?? 'Prescription') . ' from ' . ($rx->prescriber_name ?: 'MediSasa');
         $filename = $this->pdfFilename($rx);
 
         try {
@@ -309,9 +454,14 @@ class PrescriptionController extends Controller
                 $message->from('app@justhomesapp.com', 'MediSasa')
                     ->to($to)
                     ->subject($subject);
+                $bodyMap = [
+                    'medication' => 'medication prescription',
+                    'lab'        => 'lab order',
+                    'radiology'  => 'radiology order',
+                ];
+                $bodyType = $bodyMap[$type] ?? 'prescription';
                 $message->text("Hello {$rx->patient_name},\n\n"
-                    . "Please find attached your "
-                    . ($type === 'medication' ? 'medication prescription' : 'lab order')
+                    . "Please find attached your {$bodyType}"
                     . " from {$rx->prescriber_name} (issued {$rx->issued_date->format('d M Y')}).\n\n"
                     . "Reference: {$rx->prescription_number}\n\n"
                     . "If you have any questions, contact us at support@medisasa.co.ke or +254 759 000 652.\n\n"

@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             SpecializationSeeder::class,
             FacilityTypesSeeder::class,
             FacilityLevelsSeeder::class,
+            FacilityServicesSeeder::class,
             InsurancesSeeder::class,
             GroupCategoriesSeeder::class,
             MedicineCategorySeeder::class,

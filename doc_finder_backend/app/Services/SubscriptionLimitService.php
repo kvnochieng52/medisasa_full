@@ -27,6 +27,11 @@ class SubscriptionLimitService
     /** Returns ['allowed' => bool, 'message' => string] */
     public function canCreateFacility(User $user): array
     {
+        // Admins bypass subscription checks entirely.
+        if ((int) $user->account_type === 3) {
+            return ['allowed' => true];
+        }
+
         $subscription = $this->getActiveSubscription($user);
 
         if (!$subscription) {

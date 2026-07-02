@@ -11,6 +11,7 @@ import {
 import api, { getImageUrl } from "@/lib/api";
 import { useCart } from "@/lib/context/CartContext";
 import toast from "react-hot-toast";
+import SoldByFacility, { SoldByFacilityData } from "@/components/SoldByFacility";
 
 interface Category { id: number; name: string }
 
@@ -29,6 +30,7 @@ interface Medicine {
   conditions?: string[];
   manufacturer?: string;
   dosage_instructions?: string;
+  facility?: SoldByFacilityData | null;
 }
 
 export default function MedicineDetailPage() {
@@ -231,6 +233,9 @@ export default function MedicineDetailPage() {
                 )}
               </div>
             )}
+
+            {/* Sold by (facility) */}
+            <SoldByFacility facility={medicine.facility} accent="orange" />
 
             {/* Manufacturer */}
             {medicine.manufacturer && (

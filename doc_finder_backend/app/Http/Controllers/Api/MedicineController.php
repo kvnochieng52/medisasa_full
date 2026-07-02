@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Facility;
 use App\Models\Medicine;
 use App\Models\MedicineCategory;
 use App\Models\MedicineSubcategory;
@@ -13,9 +14,38 @@ use Illuminate\Support\Facades\Validator;
 
 class MedicineController extends Controller
 {
+    /**
+     * Ensure the current user is allowed to attach a medicine/product to the
+     * given facility: admins can pick any facility, everyone else can only
+     * pick a facility they own (created_by = their id).
+     *
+     * Returns a JsonResponse on failure or null on success.
+     */
+    private function guardFacilityOwnership($facilityId, Request $request): ?JsonResponse
+    {
+        if ($facilityId === null || $facilityId === '') return null;
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        if ((int) $user->account_type === 3) return null; // admin: any facility
+
+        $owns = Facility::where('id', $facilityId)
+            ->where('created_by', $user->id)
+            ->exists();
+        if (!$owns) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only add medicines to facilities you own.',
+            ], 403);
+        }
+        return null;
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $query = Medicine::with(['category', 'subcategory']);
+        $query = Medicine::with(['category', 'subcategory', 'facility']);
 
         // Only apply active filter if not explicitly requesting all
         if (!$request->has('include_inactive')) {
@@ -79,6 +109,7 @@ class MedicineController extends Controller
             'cost' => 'required|numeric|min:0',
             'category_id' => 'required|exists:medicine_categories,id',
             'subcategory_id' => 'nullable|exists:medicine_subcategories,id',
+            'facility_id' => 'required|exists:facilities,id',
             'manufacturer' => 'nullable|string|max:255',
             'strength' => 'nullable|string|max:100',
             'form' => 'nullable|string|max:100',
@@ -100,6 +131,11 @@ class MedicineController extends Controller
         }
 
         $data = $validator->validated();
+
+        // Guard facility ownership (admins bypass).
+        if ($resp = $this->guardFacilityOwnership($data['facility_id'] ?? null, $request)) {
+            return $resp;
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -125,10 +161,13 @@ class MedicineController extends Controller
         if (isset($data['subcategory_id'])) {
             $data['subcategory_id'] = (int) $data['subcategory_id'];
         }
+        if (isset($data['facility_id'])) {
+            $data['facility_id'] = (int) $data['facility_id'];
+        }
         $data['cost'] = (float) $data['cost'];
 
         $medicine = Medicine::create($data);
-        $medicine->load(['category', 'subcategory']);
+        $medicine->load(['category', 'subcategory', 'facility']);
 
         return response()->json([
             'success' => true,
@@ -139,7 +178,7 @@ class MedicineController extends Controller
 
     public function show($id): JsonResponse
     {
-        $medicine = Medicine::with(['category', 'subcategory'])->find($id);
+        $medicine = Medicine::with(['category', 'subcategory', 'facility'])->find($id);
 
         if (!$medicine) {
             return response()->json([
@@ -172,6 +211,7 @@ class MedicineController extends Controller
             'cost' => 'required|numeric|min:0',
             'category_id' => 'required|exists:medicine_categories,id',
             'subcategory_id' => 'nullable|exists:medicine_subcategories,id',
+            'facility_id' => 'required|exists:facilities,id',
             'manufacturer' => 'nullable|string|max:255',
             'strength' => 'nullable|string|max:100',
             'form' => 'nullable|string|max:100',
@@ -193,6 +233,11 @@ class MedicineController extends Controller
         }
 
         $data = $validator->validated();
+
+        // Guard facility ownership (admins bypass).
+        if ($resp = $this->guardFacilityOwnership($data['facility_id'] ?? null, $request)) {
+            return $resp;
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -223,10 +268,13 @@ class MedicineController extends Controller
         if (isset($data['subcategory_id'])) {
             $data['subcategory_id'] = (int) $data['subcategory_id'];
         }
+        if (isset($data['facility_id'])) {
+            $data['facility_id'] = (int) $data['facility_id'];
+        }
         $data['cost'] = (float) $data['cost'];
 
         $medicine->update($data);
-        $medicine->load(['category', 'subcategory']);
+        $medicine->load(['category', 'subcategory', 'facility']);
 
         return response()->json([
             'success' => true,

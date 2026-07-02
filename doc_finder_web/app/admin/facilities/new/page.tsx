@@ -5,14 +5,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Building2, Mail, Phone, MapPin, Globe, FileText,
-  Upload, X, ChevronRight, Loader2, CheckCircle, Plus,
+  Upload, X, ChevronRight, Loader2, CheckCircle, Plus, Trash2,
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
 
 interface Option { id: number; name: string }
-interface Specialization { id: number; specialization_name: string }
+interface FacilityServiceRef { id: number; name: string; description?: string | null }
+
+interface ServiceRow {
+  facility_service_id: number | null; // null → custom service
+  title: string;
+  description: string;
+  amount: string; // kept as string in the form for input flexibility
+}
 
 interface FormState {
   facility_name: string;
@@ -25,7 +32,7 @@ interface FormState {
   facility_level_id: string;
   accepts_insurance: boolean;
   insurance_ids: number[];
-  specialty_ids: number[];
+  services: ServiceRow[];
 }
 
 export default function NewFacilityPage() {
@@ -37,8 +44,7 @@ export default function NewFacilityPage() {
   const [facilityTypes, setFacilityTypes] = useState<Option[]>([]);
   const [facilityLevels, setFacilityLevels] = useState<Option[]>([]);
   const [insurances, setInsurances] = useState<Option[]>([]);
-  const [specializations, setSpecializations] = useState<Specialization[]>([]);
-  const [showSpecModal, setShowSpecModal] = useState(false);
+  const [facilityServices, setFacilityServices] = useState<FacilityServiceRef[]>([]);
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -56,7 +62,7 @@ export default function NewFacilityPage() {
     facility_level_id: "",
     accepts_insurance: false,
     insurance_ids: [],
-    specialty_ids: [],
+    services: [],
   });
 
   const set = (k: keyof FormState, v: unknown) =>
@@ -67,12 +73,12 @@ export default function NewFacilityPage() {
       api.get<{ data: Option[] }>("/facility-types"),
       api.get<{ data: Option[] }>("/facility-levels"),
       api.get<{ data: Option[] }>("/insurances"),
-      api.get<{ data: Specialization[] }>("/specializations/active-for-facility"),
-    ]).then(([types, levels, ins, specs]) => {
+      api.get<{ data: FacilityServiceRef[] }>("/facility-services"),
+    ]).then(([types, levels, ins, svcs]) => {
       setFacilityTypes(types.data.data ?? []);
       setFacilityLevels(levels.data.data ?? []);
       setInsurances(ins.data.data ?? []);
-      setSpecializations(specs.data.data ?? []);
+      setFacilityServices(svcs.data.data ?? []);
     }).catch(() => toast.error("Failed to load form options"));
   }, []);
 
@@ -82,8 +88,28 @@ export default function NewFacilityPage() {
     if (!form.facility_email.trim()) { toast.error("Email is required"); return false; }
     if (!form.facility_phone.trim()) { toast.error("Phone number is required"); return false; }
     if (!form.facility_location.trim()) { toast.error("Location is required"); return false; }
-    if (form.specialty_ids.length === 0) { toast.error("Select at least one specialty"); return false; }
+    if (form.services.some(s => !s.title.trim())) { toast.error("Each service needs a title"); return false; }
     return true;
+  };
+
+  // ── Services helpers ─────────────────────────────────────────────────
+  const addServiceFromCatalogue = (svcId: number) => {
+    if (form.services.some(s => s.facility_service_id === svcId)) return;
+    const ref = facilityServices.find(s => s.id === svcId);
+    if (!ref) return;
+    set("services", [
+      ...form.services,
+      { facility_service_id: svcId, title: ref.name, description: ref.description ?? "", amount: "" },
+    ]);
+  };
+  const addCustomService = () => {
+    set("services", [...form.services, { facility_service_id: null, title: "", description: "", amount: "" }]);
+  };
+  const updateService = (idx: number, patch: Partial<ServiceRow>) => {
+    set("services", form.services.map((s, i) => i === idx ? { ...s, ...patch } : s));
+  };
+  const removeService = (idx: number) => {
+    set("services", form.services.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,13 +118,19 @@ export default function NewFacilityPage() {
 
     setSaving(true);
     try {
-      // 1. Create facility
+      // 1. Create facility (including services in one call)
       const payload: Record<string, unknown> = {
         facility_name: form.facility_name.trim(),
         facility_profile: form.facility_profile.trim(),
         facility_email: form.facility_email.trim(),
         facility_phone: form.facility_phone.trim(),
         facility_location: form.facility_location.trim(),
+        services: form.services.map(s => ({
+          facility_service_id: s.facility_service_id,
+          title: s.title.trim(),
+          description: s.description.trim() || null,
+          amount: s.amount.trim() === "" ? null : Number(s.amount),
+        })),
       };
       if (form.facility_website.trim()) payload.facility_website = form.facility_website.trim();
       if (form.facility_type_id) payload.facility_type_id = Number(form.facility_type_id);
@@ -109,13 +141,7 @@ export default function NewFacilityPage() {
       const facilityId = res.data.facility?.id;
       if (!facilityId) throw new Error("No facility ID returned");
 
-      // 2. Save specialties
-      await api.post("/save-facility-specialties", {
-        facility_id: facilityId,
-        specialty_ids: form.specialty_ids,
-      });
-
-      // 3. Upload logo
+      // 2. Upload logo
       if (logoFile) {
         const fd = new FormData();
         fd.append("facility_id", String(facilityId));
@@ -125,7 +151,7 @@ export default function NewFacilityPage() {
         });
       }
 
-      // 4. Upload cover image
+      // 3. Upload cover image
       if (coverFile) {
         const fd = new FormData();
         fd.append("facility_id", String(facilityId));
@@ -281,30 +307,79 @@ export default function NewFacilityPage() {
             </Field>
           </Section>
 
-          {/* ─── Specialties ─── */}
-          <Section title="Specialties">
-            <button type="button" onClick={() => setShowSpecModal(true)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left flex items-center justify-between hover:border-brand-400 transition-colors">
-              <span className={form.specialty_ids.length > 0 ? "text-gray-700" : "text-gray-400"}>
-                {form.specialty_ids.length > 0
-                  ? `${form.specialty_ids.length} specialt${form.specialty_ids.length > 1 ? "ies" : "y"} selected`
-                  : "Select specialties…"}
-              </span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </button>
-            {form.specialty_ids.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {form.specialty_ids.map(id => {
-                  const s = specializations.find(x => x.id === id);
-                  return s ? (
-                    <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-50 text-brand-600 text-xs rounded-full font-medium">
-                      {s.specialization_name}
-                      <button type="button" onClick={() => set("specialty_ids", form.specialty_ids.filter(i => i !== id))}>
-                        <X className="w-3 h-3" />
+          {/* ─── Services offered ─── */}
+          <Section title="Services Offered">
+            <p className="text-xs text-gray-500 -mt-2">
+              Pick services from the catalogue or add your own. Each service can have a description and a price.
+            </p>
+
+            {/* Add from catalogue */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Add from catalogue</label>
+              <select
+                value=""
+                onChange={e => { if (e.target.value) addServiceFromCatalogue(Number(e.target.value)); }}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-brand-400 transition-all"
+              >
+                <option value="">Choose a service to add…</option>
+                {facilityServices
+                  .filter(s => !form.services.some(fs => fs.facility_service_id === s.id))
+                  .map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <button type="button" onClick={addCustomService}
+                className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+                <Plus className="w-4 h-4" /> Add custom service
+              </button>
+            </div>
+
+            {form.services.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">No services added yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {form.services.map((svc, idx) => (
+                  <div key={idx} className="p-4 rounded-xl border border-gray-100 bg-gray-50/60">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          svc.facility_service_id ? "bg-brand-50 text-brand-700" : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {svc.facility_service_id ? "Catalogue" : "Custom"}
+                        </span>
+                      </div>
+                      <button type="button" onClick={() => removeService(idx)}
+                        className="text-gray-400 hover:text-red-500" aria-label="Remove service">
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                    </span>
-                  ) : null;
-                })}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                          Title <span className="text-red-400">*</span>
+                        </label>
+                        <input type="text" value={svc.title}
+                          onChange={e => updateService(idx, { title: e.target.value })}
+                          placeholder="e.g. General Consultation"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:border-brand-400" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Amount (KES)</label>
+                        <input type="number" step="0.01" min="0" value={svc.amount}
+                          onChange={e => updateService(idx, { amount: e.target.value })}
+                          placeholder="e.g. 1500"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:border-brand-400" />
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Description (optional)</label>
+                      <textarea rows={2} value={svc.description}
+                        onChange={e => updateService(idx, { description: e.target.value })}
+                        placeholder="Optional notes for patients"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:border-brand-400 resize-none" />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Section>
@@ -366,21 +441,6 @@ export default function NewFacilityPage() {
           </div>
         </form>
       </div>
-
-      {/* ─── Specialties Modal ─── */}
-      <SelectionModal
-        open={showSpecModal}
-        title="Select Specialties"
-        onClose={() => setShowSpecModal(false)}
-        items={specializations.map(s => ({ id: s.id, name: s.specialization_name }))}
-        selected={form.specialty_ids}
-        onToggle={id => set("specialty_ids",
-          form.specialty_ids.includes(id)
-            ? form.specialty_ids.filter(i => i !== id)
-            : [...form.specialty_ids, id]
-        )}
-        onClear={() => set("specialty_ids", [])}
-      />
 
       {/* ─── Insurance Modal ─── */}
       <SelectionModal

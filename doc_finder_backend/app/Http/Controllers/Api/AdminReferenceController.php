@@ -251,6 +251,59 @@ class AdminReferenceController extends Controller
     }
 
     // -----------------------------------------------------------------------
+    // Facility services  (name, slug, description, is_active, sort_order)
+    // -----------------------------------------------------------------------
+
+    public function indexFacilityServices(Request $r)
+    {
+        $this->ensureAdmin($r);
+        return response()->json(['success' => true, 'data' => DB::table('facility_services')->orderBy('sort_order')->orderBy('name')->get()]);
+    }
+
+    public function storeFacilityService(Request $r)
+    {
+        $this->ensureAdmin($r);
+        $d = $r->validate([
+            'name' => 'required|string|max:255|unique:facility_services,name',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+        $id = DB::table('facility_services')->insertGetId([
+            'name' => $d['name'],
+            'slug' => $this->uniqueSlug('facility_services', $d['name']),
+            'description' => $d['description'] ?? null,
+            'is_active' => $d['is_active'] ?? true,
+            'sort_order' => $d['sort_order'] ?? 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        return response()->json(['success' => true, 'data' => DB::table('facility_services')->find($id)], 201);
+    }
+
+    public function updateFacilityService(Request $r, $id)
+    {
+        $this->ensureAdmin($r);
+        $d = $r->validate([
+            'name' => 'sometimes|string|max:255|unique:facility_services,name,' . $id,
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+        $update = array_merge($d, ['updated_at' => now()]);
+        if (isset($d['name'])) $update['slug'] = $this->uniqueSlug('facility_services', $d['name'], $id);
+        DB::table('facility_services')->where('id', $id)->update($update);
+        return response()->json(['success' => true, 'data' => DB::table('facility_services')->find($id)]);
+    }
+
+    public function destroyFacilityService(Request $r, $id)
+    {
+        $this->ensureAdmin($r);
+        DB::table('facility_services')->where('id', $id)->delete();
+        return response()->json(['success' => true, 'message' => 'Deleted']);
+    }
+
+    // -----------------------------------------------------------------------
     // Group categories  (name, slug, description, position)
     // -----------------------------------------------------------------------
 

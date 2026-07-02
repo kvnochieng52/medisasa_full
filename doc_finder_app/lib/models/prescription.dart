@@ -199,3 +199,113 @@ class LabPrescription {
         items: (j['items'] as List? ?? []).map((e) => LabItem.fromJson(e)).toList(),
       );
 }
+
+class RadiologyItem {
+  final int? id;
+  final String studyName;
+  final String? modality;
+  final String? bodyPart;
+  final String? side;
+  final String contrast; // none | with | without | oral
+  final String urgency;  // routine | urgent | stat
+  final String? clinicalIndication;
+  final String? notes;
+
+  RadiologyItem({
+    this.id,
+    required this.studyName,
+    this.modality,
+    this.bodyPart,
+    this.side,
+    this.contrast = 'none',
+    this.urgency = 'routine',
+    this.clinicalIndication,
+    this.notes,
+  });
+
+  factory RadiologyItem.fromJson(Map<String, dynamic> j) => RadiologyItem(
+        id: j['id'],
+        studyName: j['study_name'] ?? '',
+        modality: j['modality'],
+        bodyPart: j['body_part'],
+        side: j['side'],
+        contrast: j['contrast'] ?? 'none',
+        urgency: j['urgency'] ?? 'routine',
+        clinicalIndication: j['clinical_indication'],
+        notes: j['notes'],
+      );
+
+  Map<String, dynamic> toJson() => {
+        'study_name': studyName,
+        if (modality != null) 'modality': modality,
+        if (bodyPart != null) 'body_part': bodyPart,
+        if (side != null) 'side': side,
+        'contrast': contrast,
+        'urgency': urgency,
+        if (clinicalIndication != null) 'clinical_indication': clinicalIndication,
+        if (notes != null) 'notes': notes,
+      };
+}
+
+class RadiologyPrescription {
+  final int id;
+  final String prescriptionNumber;
+  final String prescriberName;
+  final String? prescriberLicenceNumber;
+  final String? prescriberPhone;
+  final String? prescriberEmail;
+  final String? clinicName;
+  final String? clinicAddress;
+  final String patientName;
+  final String? patientEmail;
+  final String? patientPhone;
+  final String? patientDob;
+  final int? patientAge;
+  final String? patientSex; // male | female | other
+  final String issuedDate;
+  final String? clinicalInformation;
+  final String? notes;
+  final List<RadiologyItem> items;
+
+  RadiologyPrescription({
+    required this.id,
+    required this.prescriptionNumber,
+    required this.prescriberName,
+    this.prescriberLicenceNumber,
+    this.prescriberPhone,
+    this.prescriberEmail,
+    this.clinicName,
+    this.clinicAddress,
+    required this.patientName,
+    this.patientEmail,
+    this.patientPhone,
+    this.patientDob,
+    this.patientAge,
+    this.patientSex,
+    required this.issuedDate,
+    this.clinicalInformation,
+    this.notes,
+    required this.items,
+  });
+
+  factory RadiologyPrescription.fromJson(Map<String, dynamic> j) => RadiologyPrescription(
+        id: j['id'],
+        prescriptionNumber: j['prescription_number'] ?? '',
+        prescriberName: j['prescriber_name'] ?? '',
+        prescriberLicenceNumber: j['prescriber_licence_number'],
+        prescriberPhone: j['prescriber_phone'],
+        prescriberEmail: j['prescriber_email'],
+        clinicName: j['clinic_name'],
+        clinicAddress: j['clinic_address'],
+        patientName: j['patient_name'] ?? '',
+        patientEmail: j['patient_email'],
+        patientPhone: j['patient_phone'],
+        patientDob: j['patient_dob']?.toString(),
+        patientAge: j['patient_age'] is int ? j['patient_age'] : int.tryParse('${j['patient_age'] ?? ''}'),
+        patientSex: j['patient_sex'],
+        issuedDate: j['issued_date']?.toString() ?? '',
+        clinicalInformation: j['clinical_information'],
+        notes: j['notes'],
+        items: (j['items'] as List? ?? []).map((e) => RadiologyItem.fromJson(e)).toList(),
+      );
+}

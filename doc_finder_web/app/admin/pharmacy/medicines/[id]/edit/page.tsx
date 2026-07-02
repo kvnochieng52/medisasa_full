@@ -7,6 +7,7 @@ import { ChevronRight, Loader2, Upload, Pill, ChevronDown, ShieldAlert } from "l
 import api, { getImageUrl } from "@/lib/api";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
+import FacilityPicker from "@/components/admin/FacilityPicker";
 
 interface Category { id: number; name: string }
 interface SubCategory { id: number; name: string }
@@ -29,7 +30,7 @@ export default function EditMedicinePage() {
 
   const [form, setForm] = useState({
     name: "", medicine_number: "", description: "", cost: "",
-    category_id: "", subcategory_id: "", manufacturer: "",
+    category_id: "", subcategory_id: "", facility_id: "", manufacturer: "",
     strength: "", form: "", quantity_available: "0", conditions: "",
     requires_prescription: false,
   });
@@ -37,7 +38,7 @@ export default function EditMedicinePage() {
   useEffect(() => {
     Promise.all([
       api.get<{ categories: Category[] }>("/medicine-categories"),
-      api.get<{ medicine: { id: number; name: string; medicine_number: string; cost: string; description?: string; manufacturer?: string; strength?: string; form?: string; quantity_available: number; requires_prescription: boolean; conditions?: string[]; image?: string; category?: { id: number }; subcategory?: { id: number } } }>(`/medicines/${id}`),
+      api.get<{ medicine: { id: number; name: string; medicine_number: string; cost: string; description?: string; manufacturer?: string; strength?: string; form?: string; quantity_available: number; requires_prescription: boolean; conditions?: string[]; image?: string; facility_id?: number | null; category?: { id: number }; subcategory?: { id: number } } }>(`/medicines/${id}`),
     ]).then(([catsRes, medRes]) => {
       setCategories(catsRes.data.categories ?? []);
       const m = medRes.data.medicine;
@@ -46,6 +47,7 @@ export default function EditMedicinePage() {
       setExistingImage(getImageUrl(m.image));
       const catId = m.category?.id ? String(m.category.id) : "";
       const subId = m.subcategory?.id ? String(m.subcategory.id) : "";
+      const facId = m.facility_id != null ? String(m.facility_id) : "";
 
       setForm({
         name: m.name || "",
@@ -54,6 +56,7 @@ export default function EditMedicinePage() {
         cost: m.cost || "",
         category_id: catId,
         subcategory_id: subId,
+        facility_id: facId,
         manufacturer: m.manufacturer || "",
         strength: m.strength || "",
         form: m.form || "",
@@ -102,6 +105,7 @@ export default function EditMedicinePage() {
     if (!form.medicine_number.trim()) { toast.error("Medicine number is required"); return; }
     if (!form.cost) { toast.error("Cost is required"); return; }
     if (!form.category_id) { toast.error("Category is required"); return; }
+    if (!form.facility_id) { toast.error("Facility is required"); return; }
 
     setSaving(true);
     try {
@@ -111,6 +115,7 @@ export default function EditMedicinePage() {
       fd.append("medicine_number", form.medicine_number.trim());
       fd.append("cost", form.cost);
       fd.append("category_id", form.category_id);
+      fd.append("facility_id", form.facility_id);
       if (form.subcategory_id) fd.append("subcategory_id", form.subcategory_id);
       if (form.description.trim()) fd.append("description", form.description.trim());
       if (form.manufacturer.trim()) fd.append("manufacturer", form.manufacturer.trim());
@@ -201,6 +206,12 @@ export default function EditMedicinePage() {
                   className={inputCls} />
               </Field>
             </div>
+
+            <FacilityPicker
+              value={form.facility_id}
+              onChange={id => set("facility_id", id)}
+              hint="Admins can pick any facility; providers can only pick their own."
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Category" required>

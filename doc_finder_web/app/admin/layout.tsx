@@ -17,6 +17,7 @@ const ADMIN_ONLY_PATHS = [
   "/admin/facility-types",
   "/admin/facility-levels",
   "/admin/insurances",
+  "/admin/facility-services",
   "/admin/group-categories",
   "/admin/conditions",
   "/admin/symptoms",

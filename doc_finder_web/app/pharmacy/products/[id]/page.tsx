@@ -11,6 +11,7 @@ import {
 import api, { getImageUrl } from "@/lib/api";
 import { useCart } from "@/lib/context/CartContext";
 import toast from "react-hot-toast";
+import SoldByFacility, { SoldByFacilityData } from "@/components/SoldByFacility";
 
 interface Category { id: number; name: string }
 
@@ -28,6 +29,7 @@ interface MedicalProduct {
   category?: Category;
   manufacturer?: string;
   usage_instructions?: string;
+  facility?: SoldByFacilityData | null;
 }
 
 export default function ProductDetailPage() {
@@ -229,6 +231,9 @@ export default function ProductDetailPage() {
                 <p className="text-sm text-gray-600 leading-relaxed">{product.usage_instructions}</p>
               </div>
             )}
+
+            {/* Sold by (facility) */}
+            <SoldByFacility facility={product.facility} accent="orange" />
 
             {/* Manufacturer */}
             {product.manufacturer && (

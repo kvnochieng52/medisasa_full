@@ -22,9 +22,9 @@ class FacilityTypesSeeder extends Seeder
                 'sort_order' => 1,
             ],
             [
-                'name' => 'Labaratory',
+                'name' => 'Labaratory & Radiology',
                 'slug' => 'laboratory',
-                'description' => 'Medical laboratories for diagnostic testing',
+                'description' => 'Medical laboratories and radiology / imaging centres',
                 'sort_order' => 2,
             ],
             [
@@ -67,6 +67,12 @@ class FacilityTypesSeeder extends Seeder
                 'name' => 'Diagnostic and Imaging Centers',
                 'slug' => 'diagnostic-and-imaging-centers',
                 'description' => 'Centers specializing in medical imaging and diagnostics',
+                'sort_order' => 9,
+            ],
+            [
+                'name' => 'Radiology',
+                'slug' => 'radiology',
+                'description' => 'Radiology and imaging facilities',
                 'sort_order' => 9,
             ],
             [

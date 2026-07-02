@@ -5,12 +5,21 @@ import 'package:xyvra_health/models/api_config.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:xyvra_health/pages/find_facility/facility_profile_page.dart';
 
+/// Which quick-access filter, if any, is driving this results page.
+/// Maps 1:1 to the web `/hospitals?type=lab|radiology`.
+enum FacilityQuickFilter { lab, radiology }
+
 class FacilityResultsPage extends StatefulWidget {
   final String? selectedSpecialty;
   final String? selectedLocation;
   final List<String> selectedSymptoms;
   final List<String> selectedDiseases;
   final List<Map<String, dynamic>>? searchResults;
+
+  /// When set, loads approved facilities and filters them by facility type
+  /// (primary) or offered service (fallback). Mirrors the web homepage
+  /// Lab / Radiology buttons.
+  final FacilityQuickFilter? quickFilter;
 
   const FacilityResultsPage({
     Key? key,
@@ -19,6 +28,7 @@ class FacilityResultsPage extends StatefulWidget {
     this.selectedSymptoms = const [],
     this.selectedDiseases = const [],
     this.searchResults,
+    this.quickFilter,
   }) : super(key: key);
 
   @override
@@ -39,10 +49,83 @@ class _FacilityResultsPageState extends State<FacilityResultsPage> {
         facilities = widget.searchResults!;
         _isLoading = false;
       });
+    } else if (widget.quickFilter != null) {
+      _loadApprovedThenQuickFilter();
     } else {
       // Load facilities from API
       _loadFacilities();
     }
+  }
+
+  /// Load all approved facilities and filter by the requested quick filter
+  /// (facility type primary, offered service fallback).
+  Future<void> _loadApprovedThenQuickFilter() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final resp = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/public-facilities/approved?per_page=50'),
+        headers: {'Accept': 'application/json'},
+      );
+      if (resp.statusCode != 200) {
+        setState(() {
+          _errorMessage = 'Server error: ${resp.statusCode}';
+          _isLoading = false;
+        });
+        return;
+      }
+      final data = json.decode(resp.body);
+      final list = (data['data'] as List? ?? [])
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+
+      final filtered = list.where((f) => _matchesQuickFilter(f, widget.quickFilter!)).toList();
+
+      setState(() {
+        facilities = filtered;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Network error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  bool _matchesQuickFilter(Map<String, dynamic> f, FacilityQuickFilter which) {
+    final typeName = (f['facility_type']?['name'] ?? '').toString().toLowerCase();
+    final services = (f['offered_services'] as List? ?? []);
+
+    late final RegExp typeRegex;
+    late final RegExp serviceRegex;
+    switch (which) {
+      case FacilityQuickFilter.lab:
+        typeRegex    = RegExp(r'\blab', caseSensitive: false);
+        serviceRegex = RegExp(r'\blab|patholog', caseSensitive: false);
+        break;
+      case FacilityQuickFilter.radiology:
+        typeRegex    = RegExp(r'radiolog|imaging|diagnostic', caseSensitive: false);
+        serviceRegex = RegExp(
+          r'radiolog|imaging|\bx[- ]?ray\b|mri|ct scan|ultrasound|mammogram',
+          caseSensitive: false,
+        );
+        break;
+    }
+
+    if (typeName.isNotEmpty && typeRegex.hasMatch(typeName)) return true;
+
+    for (final s in services) {
+      final title = (s['title'] ?? '').toString();
+      final ref = s['service'];
+      final refName = (ref is Map ? (ref['name'] ?? '') : '').toString();
+      if (serviceRegex.hasMatch(title) || (refName.isNotEmpty && serviceRegex.hasMatch(refName))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<void> _loadFacilities() async {
@@ -138,12 +221,23 @@ class _FacilityResultsPageState extends State<FacilityResultsPage> {
     );
   }
 
+  String _titleForQuickFilter() {
+    switch (widget.quickFilter) {
+      case FacilityQuickFilter.lab:
+        return 'Laboratory & Radiology';
+      case FacilityQuickFilter.radiology:
+        return 'Radiology';
+      case null:
+        return 'Hospitals${widget.selectedLocation != null ? ' in ${widget.selectedLocation}' : ''}';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Hospitals${widget.selectedLocation != null ? ' in ${widget.selectedLocation}' : ''}',
+          _titleForQuickFilter(),
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF008faf),
@@ -151,7 +245,9 @@ class _FacilityResultsPageState extends State<FacilityResultsPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadFacilities,
+            onPressed: widget.quickFilter != null
+                ? _loadApprovedThenQuickFilter
+                : _loadFacilities,
           ),
         ],
       ),

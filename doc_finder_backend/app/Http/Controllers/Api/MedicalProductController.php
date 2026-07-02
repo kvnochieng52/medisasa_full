@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Facility;
 use App\Models\MedicalProduct;
 use App\Models\MedicineCategory;
 use App\Models\MedicineSubcategory;
@@ -15,12 +16,38 @@ use Illuminate\Support\Str;
 class MedicalProductController extends Controller
 {
     /**
+     * Ensure the user can attach a product to the given facility:
+     * admins can pick any; everyone else must own the facility.
+     */
+    private function guardFacilityOwnership($facilityId, Request $request): ?JsonResponse
+    {
+        if ($facilityId === null || $facilityId === '') return null;
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        if ((int) $user->account_type === 3) return null; // admin: any facility
+
+        $owns = Facility::where('id', $facilityId)
+            ->where('created_by', $user->id)
+            ->exists();
+        if (!$owns) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only add products to facilities you own.',
+            ], 403);
+        }
+        return null;
+    }
+
+    /**
      * Display a listing of medical products with filtering and pagination
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = MedicalProduct::query();
+            $query = MedicalProduct::query()->with('facility');
 
             // Search functionality
             if ($request->filled('search')) {
@@ -73,6 +100,16 @@ class MedicalProductController extends Controller
                     'description' => $product->description,
                     'batch_no' => $product->batch_no,
                     'category' => $product->category,
+                    'category_id' => $product->category_id,
+                    'subcategory_id' => $product->subcategory_id,
+                    'facility_id' => $product->facility_id,
+                    'facility' => $product->facility ? [
+                        'id'                => $product->facility->id,
+                        'facility_name'     => $product->facility->facility_name,
+                        'facility_phone'    => $product->facility->facility_phone,
+                        'facility_email'    => $product->facility->facility_email,
+                        'facility_location' => $product->facility->facility_location,
+                    ] : null,
                     'photo' => $product->photo,
                     'cost' => $product->cost,
                     'formatted_cost' => $product->formatted_cost,
@@ -143,6 +180,7 @@ class MedicalProductController extends Controller
                 'category' => 'nullable|string|max:255',
                 'category_id' => 'required|integer|exists:medicine_categories,id',
                 'subcategory_id' => 'nullable|integer|exists:medicine_subcategories,id',
+                'facility_id' => 'required|integer|exists:facilities,id',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'cost' => 'required|numeric|min:0',
                 'stock_quantity' => 'required|integer|min:0',
@@ -177,10 +215,18 @@ class MedicalProductController extends Controller
 
             $data = $validator->validated();
 
+            // Guard facility ownership (admins bypass).
+            if ($resp = $this->guardFacilityOwnership($data['facility_id'] ?? null, $request)) {
+                return $resp;
+            }
+
             // Type casting for proper data types
             $data['category_id'] = (int) $data['category_id'];
             if (isset($data['subcategory_id'])) {
                 $data['subcategory_id'] = (int) $data['subcategory_id'];
+            }
+            if (isset($data['facility_id'])) {
+                $data['facility_id'] = (int) $data['facility_id'];
             }
             $data['cost'] = (float) $data['cost'];
             $data['stock_quantity'] = (int) $data['stock_quantity'];
@@ -226,7 +272,7 @@ class MedicalProductController extends Controller
     public function show(string $id): JsonResponse
     {
         try {
-            $product = MedicalProduct::findOrFail($id);
+            $product = MedicalProduct::with('facility')->findOrFail($id);
 
             $productData = [
                 'id' => $product->id,
@@ -234,6 +280,18 @@ class MedicalProductController extends Controller
                 'description' => $product->description,
                 'batch_no' => $product->batch_no,
                 'category' => $product->category,
+                'category_id' => $product->category_id,
+                'subcategory_id' => $product->subcategory_id,
+                'facility_id' => $product->facility_id,
+                'facility' => $product->facility ? [
+                    'id'                => $product->facility->id,
+                    'facility_name'     => $product->facility->facility_name,
+                    'facility_phone'    => $product->facility->facility_phone,
+                    'facility_email'    => $product->facility->facility_email,
+                    'facility_location' => $product->facility->facility_location,
+                    'facility_website'  => $product->facility->facility_website,
+                    'facility_logo'     => $product->facility->facility_logo,
+                ] : null,
                 'photo' => $product->photo,
                 'cost' => $product->cost,
                 'formatted_cost' => $product->formatted_cost,

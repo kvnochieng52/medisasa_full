@@ -20,6 +20,7 @@ class Medicine extends Model
         'image',
         'category_id',
         'subcategory_id',
+        'facility_id',
         'conditions',
         'manufacturer',
         'strength',
@@ -78,6 +79,11 @@ class Medicine extends Model
     public function subcategory()
     {
         return $this->belongsTo(MedicineSubcategory::class, 'subcategory_id');
+    }
+
+    public function facility()
+    {
+        return $this->belongsTo(Facility::class);
     }
 
     public function cartItems()

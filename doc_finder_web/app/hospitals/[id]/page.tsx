@@ -15,6 +15,15 @@ interface Specialty { id: number; specialization_name: string }
 interface FacilityType { id: number; name: string }
 interface FacilityLevel { id: number; name: string }
 interface Insurance { id: number; name: string }
+interface OfferedService {
+  id: number;
+  facility_service_id?: number | null;
+  title: string;
+  description?: string | null;
+  amount?: string | number | null;
+  currency?: string | null;
+  service?: { id: number; name: string } | null;
+}
 
 interface Facility {
   id: number;
@@ -27,7 +36,7 @@ interface Facility {
   facility_location?: string;
   facility_website?: string;
   facility_description?: string;
-  facility_services?: string;
+  facility_services?: string;   // legacy free-text field, kept as a fallback
   operating_hours?: string;
   average_rating?: number;
   total_ratings?: number;
@@ -35,7 +44,20 @@ interface Facility {
   facilityLevel?: FacilityLevel;
   specialties?: Specialty[];
   insurances?: Insurance[];
+  offered_services?: OfferedService[];
   is_active?: boolean;
+}
+
+function formatKES(amount: string | number | null | undefined, currency?: string | null): string {
+  if (amount == null || amount === "") return "";
+  const n = typeof amount === "number" ? amount : Number(amount);
+  if (Number.isNaN(n)) return "";
+  const code = (currency || "KES").toUpperCase();
+  try {
+    return `${code} ${n.toLocaleString("en-KE", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  } catch {
+    return `${code} ${n}`;
+  }
 }
 
 function StarRow({ rating, total }: { rating: number; total: number }) {
@@ -222,14 +244,42 @@ export default function HospitalDetailPage() {
         </div>
 
         {/* Services */}
-        {facility.facility_services && (
+        {(facility.offered_services?.length ?? 0) > 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              Services Offered
+              <span className="text-xs font-medium text-gray-400">({facility.offered_services?.length})</span>
+            </h2>
+            <ul className="divide-y divide-gray-100">
+              {facility.offered_services!.map(svc => {
+                const price = formatKES(svc.amount, svc.currency);
+                return (
+                  <li key={svc.id} className="py-3 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{svc.title}</p>
+                      {svc.description && (
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{svc.description}</p>
+                      )}
+                    </div>
+                    {price && (
+                      <span className="text-sm font-bold text-green-700 whitespace-nowrap flex-shrink-0">
+                        {price}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : facility.facility_services ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-500" /> Services Offered
             </h2>
             <p className="text-sm text-gray-600 leading-relaxed">{facility.facility_services}</p>
           </div>
-        )}
+        ) : null}
 
         {/* Operating hours + level */}
         <div className="grid sm:grid-cols-2 gap-5">

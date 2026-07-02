@@ -7,6 +7,7 @@ import { ChevronRight, Loader2, Upload, Pill, ChevronDown, ShieldAlert } from "l
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
+import FacilityPicker from "@/components/admin/FacilityPicker";
 
 interface Category { id: number; name: string }
 interface SubCategory { id: number; name: string; category_id: number }
@@ -26,7 +27,7 @@ export default function NewMedicinePage() {
 
   const [form, setForm] = useState({
     name: "", medicine_number: "", description: "", cost: "",
-    category_id: "", subcategory_id: "", manufacturer: "",
+    category_id: "", subcategory_id: "", facility_id: "", manufacturer: "",
     strength: "", form: "", quantity_available: "0", conditions: "",
     requires_prescription: false,
   });
@@ -64,6 +65,7 @@ export default function NewMedicinePage() {
     if (!form.medicine_number.trim()) { toast.error("Medicine number is required"); return; }
     if (!form.cost) { toast.error("Cost is required"); return; }
     if (!form.category_id) { toast.error("Category is required"); return; }
+    if (!form.facility_id) { toast.error("Facility is required"); return; }
 
     setSaving(true);
     try {
@@ -72,6 +74,7 @@ export default function NewMedicinePage() {
       fd.append("medicine_number", form.medicine_number.trim());
       fd.append("cost", form.cost);
       fd.append("category_id", form.category_id);
+      fd.append("facility_id", form.facility_id);
       if (form.subcategory_id) fd.append("subcategory_id", form.subcategory_id);
       if (form.description.trim()) fd.append("description", form.description.trim());
       if (form.manufacturer.trim()) fd.append("manufacturer", form.manufacturer.trim());
@@ -157,6 +160,12 @@ export default function NewMedicinePage() {
                   className={inputCls} />
               </Field>
             </div>
+
+            <FacilityPicker
+              value={form.facility_id}
+              onChange={id => set("facility_id", id)}
+              hint="Admins can pick any facility; providers can only pick their own."
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Category" required>

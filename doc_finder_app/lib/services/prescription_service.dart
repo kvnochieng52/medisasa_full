@@ -178,6 +178,87 @@ class PrescriptionService {
     return _downloadPdf('/prescriptions/lab/$id/pdf', filename);
   }
 
+  // ---------- Radiology ----------
+
+  static Future<List<RadiologyPrescription>> listRadiology() async {
+    final res = await http.get(Uri.parse('$_baseUrl/prescriptions/radiology?per_page=50'),
+        headers: await _headers());
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load radiology orders');
+    }
+    final body = json.decode(res.body);
+    final raw = body['data'];
+    final list = (raw is Map ? raw['data'] : raw) as List? ?? [];
+    return list.map((e) => RadiologyPrescription.fromJson(e)).toList();
+  }
+
+  static Future<RadiologyPrescription> getRadiology(int id) async {
+    final res = await http.get(Uri.parse('$_baseUrl/prescriptions/radiology/$id'),
+        headers: await _headers());
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load radiology order');
+    }
+    final body = json.decode(res.body);
+    return RadiologyPrescription.fromJson(body['data']);
+  }
+
+  static Future<RadiologyPrescription> createRadiology({
+    int? appointmentId,
+    String? clinicName,
+    String? clinicAddress,
+    required String patientName,
+    String? patientEmail,
+    String? patientPhone,
+    String? patientDob,
+    int? patientAge,
+    String? patientSex,
+    String? clinicalInformation,
+    String? notes,
+    required List<RadiologyItem> items,
+  }) async {
+    final payload = {
+      if (appointmentId != null) 'appointment_id': appointmentId,
+      if (clinicName != null && clinicName.isNotEmpty) 'clinic_name': clinicName,
+      if (clinicAddress != null && clinicAddress.isNotEmpty) 'clinic_address': clinicAddress,
+      'patient_name': patientName,
+      if (patientEmail != null && patientEmail.isNotEmpty) 'patient_email': patientEmail,
+      if (patientPhone != null && patientPhone.isNotEmpty) 'patient_phone': patientPhone,
+      if (patientDob != null && patientDob.isNotEmpty) 'patient_dob': patientDob,
+      if (patientAge != null) 'patient_age': patientAge,
+      if (patientSex != null && patientSex.isNotEmpty) 'patient_sex': patientSex,
+      if (clinicalInformation != null && clinicalInformation.isNotEmpty)
+        'clinical_information': clinicalInformation,
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+      'items': items.map((i) => i.toJson()).toList(),
+    };
+    final res = await http.post(
+      Uri.parse('$_baseUrl/prescriptions/radiology'),
+      headers: await _headers(jsonBody: true),
+      body: json.encode(payload),
+    );
+    if (res.statusCode != 201 && res.statusCode != 200) {
+      final body = json.decode(res.body);
+      throw Exception(body['message'] ?? 'Failed to save radiology order');
+    }
+    return RadiologyPrescription.fromJson(json.decode(res.body)['data']);
+  }
+
+  static Future<void> emailRadiology(int id, {String? email}) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/prescriptions/radiology/$id/email'),
+      headers: await _headers(jsonBody: true),
+      body: json.encode({if (email != null && email.isNotEmpty) 'email': email}),
+    );
+    if (res.statusCode != 200) {
+      final body = json.decode(res.body);
+      throw Exception(body['message'] ?? 'Failed to send email');
+    }
+  }
+
+  static Future<File> downloadRadiologyPdf(int id, String filename) async {
+    return _downloadPdf('/prescriptions/radiology/$id/pdf', filename);
+  }
+
   // ---------- Shared ----------
 
   static Future<File> _downloadPdf(String path, String filename) async {
