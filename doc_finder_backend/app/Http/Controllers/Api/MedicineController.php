@@ -354,7 +354,7 @@ class MedicineController extends Controller
         return response()->json([
             'success' => true,
             'image_path' => $imagePath,
-            'image_url' => 'http://69.30.235.220:8006/storage/' . $imagePath
+            'image_url' => rtrim(config('app.url'), '/') . '/storage/' . $imagePath
         ]);
     }
 }

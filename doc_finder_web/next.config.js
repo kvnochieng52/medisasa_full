@@ -8,20 +8,25 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
+      // Production origin — where all storage-served images live.
       {
-        protocol: 'http',
-        hostname: '192.168.0.13',
-        port: '8006',
+        protocol: 'https',
+        hostname: 'medisasa.co.ke',
         pathname: '/**',
       },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        pathname: '/**',
-      },
+      // Any HTTPS host — needed for external content (Unsplash covers,
+      // randomuser avatars, etc.). Keep after the specific entry so more
+      // restrictive rules win where relevant.
       {
         protocol: 'https',
         hostname: '**',
+        pathname: '/**',
+      },
+      // Local dev only — allows `next/image` to load from a local
+      // Laravel server if a dev opts back into localhost.
+      {
+        protocol: 'http',
+        hostname: 'localhost',
         pathname: '/**',
       },
     ],

@@ -13,38 +13,42 @@ import api, { getImageUrl } from "@/lib/api";
 type FacilityTypeFilter = "lab" | "radiology";
 
 /**
- * Homepage quick filters — both scoped to a facility TYPE first, then a
- * services fallback so facilities that offer the service but aren't
- * classified under the exact type still show up.
+ * Homepage quick filters. Facility TYPE is the primary match — we resolve
+ * the target type IDs at runtime by SLUG (the "Laboratory & Radiology" row
+ * exists twice in the DB under two slugs due to a legacy typo, and matching
+ * by slug is safer than hard-coding IDs). If none of that facility type
+ * exist, we fall back to a service-name match.
  *
- *   Lab       → facility type "Labaratory & Radiology" (or containing "lab")
- *                fallback: any offered service matching /lab|patholog/
- *   Radiology → facility type "Radiology" (or "Diagnostic and Imaging")
- *                fallback: any offered service matching /radiolog|imaging|
- *                x-ray|mri|ct scan|ultrasound|mammogram/
+ *   Lab       → facility_type.slug ∈ { "laboratory-radiology", "laboratory" }
+ *                fallback service names: lab / pathology / radiology / imaging
+ *   Radiology → facility_type.slug = "radiology" (exact)
+ *                fallback service names: radiology / imaging / x-ray / MRI /
+ *                CT scan / ultrasound / mammogram
  */
 const TYPE_FILTERS: Record<FacilityTypeFilter, {
   label: string;
-  matchType: RegExp;
+  slugMatches: (slug: string) => boolean;
   matchService: RegExp;
   icon: typeof FlaskConical;
 }> = {
   lab: {
     label: "Laboratory & Radiology",
-    matchType: /\blab/i,
-    matchService: /\blab|patholog/i,
+    slugMatches: (slug) => slug === "laboratory-radiology" || slug === "laboratory",
+    // Lab facilities in this system also cover imaging, so the fallback
+    // catches both lab and radiology services.
+    matchService: /\blab|patholog|radiolog|imaging|\bx[- ]?ray\b|mri|ct scan|ultrasound|mammogram/i,
     icon: FlaskConical,
   },
   radiology: {
     label: "Radiology",
-    matchType: /radiolog|imaging|diagnostic/i,
+    slugMatches: (slug) => slug === "radiology",
     matchService: /radiolog|imaging|\bx[- ]?ray\b|mri|ct scan|ultrasound|mammogram/i,
     icon: Scan,
   },
 };
 
 interface Specialty { id: number; specialization_name: string }
-interface FacilityType { id: number; name: string }
+interface FacilityType { id: number; name: string; slug?: string }
 interface OfferedService {
   id: number;
   facility_service_id?: number | null;
@@ -135,11 +139,14 @@ function HospitalsContent() {
     if (type) {
       const def = TYPE_FILTERS[type];
       result = result.filter(f => {
-        // Primary: facility type name matches
-        if (f.facilityType?.name && def.matchType.test(f.facilityType.name)) {
+        // Primary: facility type slug matches. Fall back to a case-insensitive
+        // match against the type name for older records that lack a slug.
+        const slug = f.facilityType?.slug?.toLowerCase();
+        const nameSlugified = f.facilityType?.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        if ((slug && def.slugMatches(slug)) || (nameSlugified && def.slugMatches(nameSlugified))) {
           return true;
         }
-        // Fallback: any offered service matches (by title or catalogue name)
+        // Fallback: any offered service matches (title or catalogue name)
         if (f.offered_services?.some(os =>
           def.matchService.test(os.title) ||
           (os.service?.name && def.matchService.test(os.service.name))

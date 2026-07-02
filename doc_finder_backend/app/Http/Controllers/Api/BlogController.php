@@ -336,7 +336,7 @@ class BlogController extends Controller
         }
 
         $imagePath = $request->file('image')->store('blog_images', 'public');
-        $imageUrl = 'http://69.30.235.220:8006/storage/' . $imagePath;
+        $imageUrl = rtrim(config('app.url'), '/') . '/storage/' . $imagePath;
 
         if ($request->blog_id) {
             $blog = Blog::find($request->blog_id);

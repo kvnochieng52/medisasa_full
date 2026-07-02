@@ -44,7 +44,8 @@ class SetupGoogleAuth extends Command
                 'https://www.googleapis.com/auth/calendar',
                 'https://www.googleapis.com/auth/calendar.events'
             ]);
-            $client->setRedirectUri('http://127.0.0.1:8000/');
+            $redirectUri = rtrim(config('app.url'), '/') . '/';
+            $client->setRedirectUri($redirectUri);
             $client->setAccessType('offline');
             $client->setPrompt('select_account consent');
 
@@ -56,9 +57,9 @@ class SetupGoogleAuth extends Command
             $this->newLine();
 
             $this->info('2. Complete the authorization process');
-            $this->info('3. After granting permission, you will be redirected to http://127.0.0.1:8000/');
+            $this->info("3. After granting permission, you will be redirected to {$redirectUri}");
             $this->info('4. Copy the "code" parameter from the URL in your browser address bar');
-            $this->info('   Example: http://127.0.0.1:8000/?code=AUTHORIZATION_CODE&scope=...');
+            $this->info("   Example: {$redirectUri}?code=AUTHORIZATION_CODE&scope=...");
             $this->info('   Copy only the AUTHORIZATION_CODE part');
             $this->newLine();
 
